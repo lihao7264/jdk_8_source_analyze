@@ -3657,11 +3657,27 @@ public class Arrays {
      * @throws NullPointerException if <tt>original</tt> is null
      * @since 1.6
      */
+    /**
+     * 1、将指定数组的指定范围复制到新数组中。
+     *    范围（<tt> from </ tt>）的初始索引必须在零和<tt> original.length </ tt>之间（包括零）。
+     *    <tt> original [from] </ tt>处的值放置在副本的初始元素中（除非<tt> from == original.length </ tt>或<tt> from == to</ tt> ）。
+     *    来自原始数组中后续元素的值将放入副本中的后续元素中。 范围（<tt>to/ tt>）的最终下标（必须大于或等于<tt> from </ tt>），
+     *    可能大于<tt> original.length </ tt>，在这种情况下，将<tt>'\\ u000'</ tt>放置在副本的所有下标大于或等于<tt> original.length-from </ tt>的元素中。
+     *    返回数组的长度为<tt>to-from </ tt>。
+     * @param original  要从中复制数据的原始数组
+     * @param from  开始复制的初始下标(包括)
+     * @param to  结束复制的结束下标(此下标可能位于数组之外。）
+     * @return 一个包含原始数组中指定范围的新数组，将其截断或填充空字符以获取所需的长度
+     */
     public static char[] copyOfRange(char[] original, int from, int to) {
+        //新字符串的长度
         int newLength = to - from;
+        //新字符串小于0，则抛不合法的参数异常
         if (newLength < 0)
             throw new IllegalArgumentException(from + " > " + to);
+        //创建新字符串长度的字符数组
         char[] copy = new char[newLength];
+        //
         System.arraycopy(original, from, copy, 0,
                          Math.min(original.length - from, newLength));
         return copy;

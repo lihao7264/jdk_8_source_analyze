@@ -490,6 +490,17 @@ public final class System {
      * @exception  NullPointerException if either <code>src</code> or
      *               <code>dest</code> is <code>null</code>.
      */
+
+    /**
+     * 1、本地方法
+     * 2、方法介绍：
+     *
+     * @param src
+     * @param srcPos
+     * @param dest
+     * @param destPos
+     * @param length
+     */
     public static native void arraycopy(Object src,  int  srcPos,
                                         Object dest, int destPos,
                                         int length);
