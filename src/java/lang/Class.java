@@ -151,6 +151,14 @@ public final class Class<T> implements java.io.Serializable,
      *
      * @return a string representation of this class object.
      */
+    /**
+     * 1、将对象转换为字符串。
+     *  字符串表示形式是字符串“类”或“接口”，后跟一个空格，然后是类的完全限定名称，其格式为{@code getName}返回。
+     *  如果此{@code Class}对象表示原始类型，则此方法返回原始类型的名称。
+     *  如果此{@code Class}对象表示void，则此方法返回“ void”。
+     *
+     * @return 此类对象的字符串表示形式。
+     */
     public String toString() {
         return (isInterface() ? "interface " : (isPrimitive() ? "" : "class "))
             + getName();
@@ -636,7 +644,32 @@ public final class Class<T> implements java.io.Serializable,
      * @return  the name of the class or interface
      *          represented by this object.
      */
+    /**
+     * 1、返回此{@code Class}对象表示的实体的名称（类，接口，数组类，基本类型或void），作为{@code String}。
+     * 2、如果此类对象表示的引用类型不是数组类型，则返回该类的二进制名称。
+     * 3、如果此类对象表示基本类型或void，则返回的名称为{@code String}，等于与该原始类型或void对应的Java语言关键字。
+     * 4、如果此类对象表示一个类的数组，则名称的内部形式由元素类型的名称组成，其后是一个或多个代表数组嵌套深度的“ {@code [}””字符。
+     *    元素类型名称的编码如下：
+     *     元素类型       编码
+     *     boolean        Z
+     *     byte           B
+     *     char           C
+     *     class or interface  L<i>classname</i>
+     *     double         D
+     *     float          F
+     *     int            I
+     *     long           J
+     *     short          S
+     * 5、类或接口名称<i> classname </ i>是上面指定的类的二进制名称。
+     * 6、举例：  代码如jdk_8_source_analyze_test项目的ClassTest的测试例子1
+     *    a、String.class.getName()   returns "java.lang.String"
+     *    b、byte.class.getName()    returns "byte"
+     *    c、(new Object[3]).getClass().getName()  returns "[Ljava.lang.Object;"
+     *    d、(new int[3][4][5][6][7][8][9]).getClass().getName()  returns "[[[[[[[I"
+     * @return 此对象表示的类或接口的名称
+     */
     public String getName() {
+        //
         String name = this.name;
         if (name == null)
             this.name = name = getName0();
@@ -644,7 +677,36 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     // cache the name to reduce the number of calls into the VM
+    /**
+     * 缓存名称以减少进入VM的查询次数
+     */
     private transient String name;
+
+    /**
+     * 1、根据一个数组获得对应的名称，JVM根据Java层的Class可得到对应类型的数组下标。
+     *   比如：这里下标为8，则名称为”byte”。
+     *
+     * 2、对应的数组：
+     *  const char* type2name_tab[T_CONFLICT+1] = {
+     *       NULL, NULL, NULL, NULL,
+     *       "boolean",
+     *       "char",
+     *       "float",
+     *       "double",
+     *       "byte",
+     *       "short",
+     *       "int",
+     *       "long",
+     *       "object",
+     *       "array",
+     *       "void",
+     *       "*address*",
+     *       "*narrowoop*",
+     *       "*conflict*"
+     *     };
+     *
+     * @return
+     */
     private native String getName0();
 
     /**
@@ -2321,6 +2383,12 @@ public final class Class<T> implements java.io.Serializable,
     /*
      * Return the Virtual Machine's Class object for the named
      * primitive type.
+     */
+
+    /**
+     * 返回命名基本类型的虚拟机的Class对象
+     * @param name  基本类型的名称
+     * @return
      */
     static native Class<?> getPrimitiveClass(String name);
 
