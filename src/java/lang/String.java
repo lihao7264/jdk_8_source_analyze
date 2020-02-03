@@ -117,15 +117,21 @@ import java.util.regex.PatternSyntaxException;
  *       是说value一旦被赋值，内存地址是绝对无法修改的，而且value的权限是private的，外
  *       部绝对访问不到，String也没有开放出可以对value进行赋值的方法，所以说value一旦产
  *       生，内存地址就根本无法被修改。
- * 2、
+ * 2、String类表示字符串。
+ *  Java程序中的所有字符串文字（例如“ abc”）都实现为此类的实例。
+ * 3、字符串是常量； 它们的值创建后无法更改。 字符串缓冲区支持可变字符串。
+ *    由于String对象是不可变的，因此可以共享它们。
+ * 4、String类实现了三个接口，分别为 Serializable、Comparable 和 CharSequence。
+ *    其中 Serializable 接口表明其可以序列化。
  */
 public final class String
         implements java.io.Serializable, Comparable<String>, CharSequence {
     /** The value is used for character storage. */
-    /**该值用于字符存储。*/
+    /**该值用于字符存储  ---  字符串的底层存储结构*/
     private final char value[];
 
     /** Cache the hash code for the string */
+    /*字符串对象的哈希值，默认值为0。*/
     private int hash; // Default to 0
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
@@ -146,6 +152,11 @@ public final class String
      * an empty character sequence.  Note that use of this constructor is
      * unnecessary since Strings are immutable.
      */
+    /**
+     * 没有参数的构造方法直接将空字符串的 value进行赋值
+     *
+     * 注意:由于字符串是不可变的，因此不需要使用此构造函数。
+     */
     public String() {
         this.value = "".value;
     }
@@ -159,6 +170,15 @@ public final class String
      *
      * @param  original
      *         A {@code String}
+     */
+    /**
+     * 1、传入 String 对象的构造方法则将该对象对应的 value 、hash 进行赋值
+     *
+     * 2、初始化一个新创建的String对象，以便它表示与参数相同的字符序列；
+     *    换句话说，新创建的字符串是参数字符串的副本。
+     *    除非需要original的显式副本，否则不需要使用此构造函数，因为字符串是不可变的。
+     *
+     * @param original  一个String对象
      */
     public String(String original) {
         this.value = original.value;
@@ -174,7 +194,13 @@ public final class String
      * @param  value
      *         The initial value of the string
      */
+    /**
+     * 1、分配一个新的String对象，以便它表示字符数组参数中当前包含的字符序列。
+     *    字符数组的内容被复制； 字符数组的后续修改不会影响新创建的字符串。
+     * @param value
+     */
     public String(char value[]) {
+        //拷贝字符数组
         this.value = Arrays.copyOf(value, value.length);
     }
 
@@ -406,11 +432,21 @@ public final class String
      * and requested offset & length values used by the String(byte[],..)
      * constructors.
      */
+
+    /**
+     * 常用的私有方法：用于字节数组的边界检查以及String（byte []，..）构造函数使用的请求的偏移量和长度值。
+     * @param bytes  字节数组
+     * @param offset  第一个字节的下标(偏移量)
+     * @param length  字节数
+     */
     private static void checkBounds(byte[] bytes, int offset, int length) {
+        //字节数小于0，则抛异常
         if (length < 0)
             throw new StringIndexOutOfBoundsException(length);
+        //第一个字节的下标小于0，则抛异常
         if (offset < 0)
             throw new StringIndexOutOfBoundsException(offset);
+        //偏移量+字节数>字节数组的长度，则抛异常
         if (offset > bytes.length - length)
             throw new StringIndexOutOfBoundsException(offset + length);
     }
@@ -448,11 +484,25 @@ public final class String
      *
      * @since JDK1.1
      */
+    /**
+     * 1、通过使用指定的字符集解码指定的字节子数组，构造一个新的String对象。
+     *   新的String的长度是字符集的函数，因此可能不等于子数组的长度。
+     * 2、未指定给定字符集中给定字节无效时此构造函数的行为。
+     *   当需要对解码过程进行更多控制时，应使用{@link java.nio.charset.CharsetDecoder}类。
+     * @param bytes  要解码为字符的字节数组
+     * @param offset  要解码的第一个字节的下标
+     * @param length  要解码的字节数
+     * @param charsetName  受支持的java.nio.charset.Charset charset的名称
+     * @throws UnsupportedEncodingException   如果offset和length自变量下标的字符超出 bytes数组的边界
+     */
     public String(byte bytes[], int offset, int length, String charsetName)
             throws UnsupportedEncodingException {
+        //字符集为空，则抛异常
         if (charsetName == null)
             throw new NullPointerException("charsetName");
+        //检查参数(边界方面)
         checkBounds(bytes, offset, length);
+        //给定字节数组，指定指定编码进行解码成数组
         this.value = StringCoding.decode(charsetName, bytes, offset, length);
     }
 
@@ -658,6 +708,11 @@ public final class String
      * @return the length of the sequence of characters represented by this
      *          object.
      */
+    /**
+     * 1、返回此字符串的长度。
+     *   长度等于字符串中<a href="Character.html#unicode"> Unicode代码单元</a>的数量。(字符串的长度就是字节数组的长度)
+     * @return 此对象表示的字符序列的长度
+     */
     public int length() {
         return value.length;
     }
@@ -669,6 +724,10 @@ public final class String
      * {@code false}
      *
      * @since 1.6
+     */
+    /**
+     * 1、仅在#length()为0的情况下，返回true。  （通过判断char数组长度是否为0来判断字符串对象是否为空。）
+     * @return  如果#length()为0，则为true，否则为false
      */
     public boolean isEmpty() {
         return value.length == 0;
@@ -691,6 +750,16 @@ public final class String
      * @exception IndexOutOfBoundsException  if the {@code index}
      *             argument is negative or not less than the length of this
      *             string.
+     */
+    /**
+     * 1、返回指定下标处的char值。
+     *   a、下标的范围是 0到length()-1。
+     *   b、序列的第一个char值位于下标0，下一个位于下标1，依此类推，与数组下标一样。
+     *
+     *  2、如果下标指定的char值是<a href="Character.html#unicode">代理人</a>，则会返回代理人值。
+     * @param index   char值的下标
+     * @return  此字符串的指定下标处的char值。 第一个char值在索引0处
+     * @exception IndexOutOfBoundsException  如果index参数为负或不小于此字符串的长度
      */
     public char charAt(int index) {
         if ((index < 0) || (index >= value.length)) {
@@ -1242,38 +1311,64 @@ public final class String
      * @see     java.text.Collator#compare(String, String)
      * @since 1.2
      */
+    /**
+     *  1、用于排序的比较器
+     *
+     *  1、一个按 compareToIgnoreCase排序String对象的比较器。
+     *     该比较器是可序列化的。
+     *  2、请注意，该比较器不会考虑语言环境，并且会导致某些语言环境的排序不理想。
+     *     java.text包提供了Collators，以允许对语言环境敏感的排序。
+     *
+     * @see  java.text.Collator#compare(String, String)
+     */
     public static final Comparator<String> CASE_INSENSITIVE_ORDER
             = new CaseInsensitiveComparator();
 
+    /**
+     * 1、该静态内部类提供排序的比较器，实现了Comparator接口的compare方法
+     *  注意：这里比较字母的大写是否相等，又比较字母的小写是否相等。
+     *        原因：Java为了针对Georgian（格鲁吉亚）字母表奇怪的大小写转换规则而专门又增加了一步判断，就是转换成小写再比较一次，Java的国际化真的做的好
+     *             请看 @see java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)
+     */
     private static class CaseInsensitiveComparator
             implements Comparator<String>, java.io.Serializable {
         // use serialVersionUID from JDK 1.2.2 for interoperability
         private static final long serialVersionUID = 8575799808933029326L;
 
         public int compare(String s1, String s2) {
+            //获取两者的长度
             int n1 = s1.length();
             int n2 = s2.length();
+            //获取两者中的最小长度
             int min = Math.min(n1, n2);
+            //遍历两个字符串的前min位
             for (int i = 0; i < min; i++) {
                 char c1 = s1.charAt(i);
                 char c2 = s2.charAt(i);
+                //若c1不等于c2字符的话
                 if (c1 != c2) {
+                    //将c1和c2先转换成大写字母进行比较
                     c1 = Character.toUpperCase(c1);
                     c2 = Character.toUpperCase(c2);
+                    //如果两者的大写字母不相等，然后再转换成小写字母进行比较
                     if (c1 != c2) {
                         c1 = Character.toLowerCase(c1);
                         c2 = Character.toLowerCase(c2);
+                        //若两个小写字母不相等，则直接返回这两个字符的相减值即可
                         if (c1 != c2) {
                             // No overflow because of numeric promotion
+                            // 由于数字提升而没有溢出
                             return c1 - c2;
                         }
                     }
                 }
             }
+            //长度相减   1、若前面都相等，越长的越大
             return n1 - n2;
         }
 
         /** Replaces the de-serialized object. */
+        /**用于替换反序列化时的对象*/
         private Object readResolve() {
             return CASE_INSENSITIVE_ORDER;
         }

@@ -48,6 +48,12 @@ package java.lang;
  * @author Josh Bloch
  * @since 1.7
  */
+
+/**
+ * 1、在关闭之前可以保存资源（例如文件或套接字句柄）的对象。
+ *   退出已在资源规范头中声明了该对象的 try-with-resources块时，将自动调用e AutoCloseable对象的#close()方法。
+ *   这种构造可确保及时释放，避免资源耗尽异常和可能发生的错误。
+ */
 public interface AutoCloseable {
     /**
      * Closes this resource, relinquishing any underlying resources.
@@ -93,6 +99,11 @@ public interface AutoCloseable {
      * to make their {@code close} methods idempotent.
      *
      * @throws Exception if this resource cannot be closed
+     */
+    /**
+     * 1、关闭此资源，放弃所有基础资源。
+     *   在{@code try} -with-resources语句管理的对象上自动调用此方法。
+     * @throws Exception  如果无法关闭此资源
      */
     void close() throws Exception;
 }
