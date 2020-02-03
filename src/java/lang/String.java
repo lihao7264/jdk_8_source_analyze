@@ -636,7 +636,16 @@ public final class String
      * a separate constructor is needed because we already have a public
      * String(char[]) constructor that makes a copy of the given char[].
      */
+
+    /**
+     * 包私有构造函数，它共享值数组。
+     * 这个构造函数总是希望使用share == true调用它。
+     * 需要一个单独的构造函数，因为我们已经有一个公共String（char []）构造函数，它复制给定char []。
+     * @param value
+     * @param share
+     */
     String(char[] value, boolean share) {
+        //断言 共享：“不共享不支持”；
         // assert share : "unshared not supported";
         this.value = value;
     }
@@ -1011,17 +1020,30 @@ public final class String
      * @see  #compareTo(String)
      * @see  #equalsIgnoreCase(String)
      */
+    /**
+     * 1、将此字符串与指定对象进行比较。
+     *   当且仅当参数不是null并且是一个String对象，并且表示与此对象相同的字符序列时，结果为true。
+     * @param anObject  与当前String对象进行比较的对象
+     * @return 如果给定的对象表示与此字符串等效的String对象，则返回true，否则返回false
+     */
     public boolean equals(Object anObject) {
+        // 判断内存地址是否相同
         if (this == anObject) {
             return true;
         }
+        //待比较的对象是否是 String类型的，如果不是 String，直接返回不相等
         if (anObject instanceof String) {
+            //注意：String类是不可变类，所以入参只能是String类型的
+            //当前对象的类型是String类，则强转入参为String类型
             String anotherString = (String) anObject;
+            // 获取当前对象的char[]数组的长度
             int n = value.length;
+            // 两个字符串的长度是否相等，不等则直接返回不相等
             if (n == anotherString.value.length) {
                 char v1[] = value;
                 char v2[] = anotherString.value;
                 int i = 0;
+                //依次比较每个字符是否相等，若有一个不等，直接返回不相等
                 while (n-- != 0) {
                     if (v1[i] != v2[i])
                         return false;
@@ -1030,6 +1052,7 @@ public final class String
                 return true;
             }
         }
+        //比较的对象不是String类或两个字符串的长度不相等的话，则直接返回false
         return false;
     }
 
@@ -2127,12 +2150,28 @@ public final class String
      * @return a string derived from this string by replacing every
      *          occurrence of {@code oldChar} with {@code newChar}.
      */
+    /**
+     * 1、返回一个字符串，该字符串是通过用newChar替换此字符串中所有出现的oldChar而产生的。
+     *   如果在此String对象表示的字符序列中未出现字符oldChar，则返回对该String对象的引用。
+     *   否则，返回一个String对象，该对象表示与该String对象表示的字符序列相同的字符序列，除了每个oldChar字符替换为newChar。
+     * 2、举例
+     *  a、"mesquite in your cellar".replace('e', 'o')  returns "mosquito in your collar"
+     *  b、"the war of baronets".replace('r', 'y') returns "the way of bayonets"
+     *  c、"sparring with a purple porpoise".replace('p', 't') returns "starring with a turtle tortoise"
+     *  d、"JonL".replace('q', 'x')   returns "JonL" (no change)
+     * @param oldChar   旧的字符
+     * @param newChar   新的字符
+     * @return 通过用newChar替换每次出现的oldChar，从而得到从源字符串派生出新字符串
+     */
     public String replace(char oldChar, char newChar) {
+        //判断旧的字符和新的字符是否相同，若相同，则直接返回当前String对象即可
         if (oldChar != newChar) {
             int len = value.length;
             int i = -1;
+            //避免getfield
             char[] val = value; /* avoid getfield opcode */
 
+            //遍历当前字符串是否存在旧的字符，存在的话，i会小于当前字符串的长度，否则直接返回当前String对象
             while (++i < len) {
                 if (val[i] == oldChar) {
                     break;
@@ -2140,14 +2179,18 @@ public final class String
             }
             if (i < len) {
                 char buf[] = new char[len];
+                //遍历前面不是旧字符的字符，并且保存到新的char[]数组中
                 for (int j = 0; j < i; j++) {
                     buf[j] = val[j];
                 }
+                //遍历剩下的字符数组
                 while (i < len) {
                     char c = val[i];
+                    //若当前字符是旧字符，则在新的char[]数组中增加新字符，否则保存当前字符即可
                     buf[i] = (c == oldChar) ? newChar : c;
                     i++;
                 }
+                //根据新的字符数组创建String对象
                 return new String(buf, true);
             }
         }
@@ -2238,6 +2281,15 @@ public final class String
      * @since 1.4
      * @spec JSR-51
      */
+    /**
+     * 1、用给定的替换项替换与给定的<a href="../util/regex/Pattern.html#sum">正则表达式</a>匹配的该字符串的第一个子字符串。
+     * 注意：替换字符串中的反斜杠（{@code \}）和美元符号（{@code $}）可能导致结果与被视为文字替换字符串的结果有所不同；
+     *     请参阅{@link java.util.regex.Matcher＃replaceFirst}。
+     *     如果需要，请使用{@link java.util.regex.Matcher＃quoteReplacement}取消显示这些字符的特殊含义。
+     * @param regex    此字符串要匹配的正则表达式
+     * @param replacement  要替换第一个匹配项的字符串
+     * @return  一个字符串
+     */
     public String replaceFirst(String regex, String replacement) {
         return Pattern.compile(regex).matcher(this).replaceFirst(replacement);
     }
@@ -2283,6 +2335,15 @@ public final class String
      * @since 1.4
      * @spec JSR-51
      */
+    /**
+     * 1、用给定的替换项替换与给定的<a href="../util/regex/Pattern.html#sum">正则表达式</a>匹配的该字符串的每个子字符串。
+     * 注意：替换字符串中的反斜杠（{@code \}）和美元符号（{@code $}）可能导致结果与被视为文字替换字符串的结果有所不同；
+     *      请参阅java.util.regex.Matcher＃replaceAll Matcher.replaceAll。
+     *      如果需要，可以使用 java.util.regex.Matcher＃quoteReplacement取消显示这些字符的特殊含义。
+     * @param regex         该字符串要与之匹配的正则表达式
+     * @param replacement    每次匹配的字符串要替换成的字符串
+     * @return   一个字符串
+     */
     public String replaceAll(String regex, String replacement) {
         return Pattern.compile(regex).matcher(this).replaceAll(replacement);
     }
@@ -2299,7 +2360,15 @@ public final class String
      * @return The resulting string
      * @since 1.5
      */
+    /**
+     * 1、用指定的文字替换序列替换该字符串中与文字目标序列匹配的每个子字符串。替换从字符串的开头到结尾进行。
+     * 2、例如，在字符串“ aaa”中将“ aa”替换为“ b”将得到“ ba”而不是“ ab”。
+     * @param target  被替换的char值的序列
+     * @param replacement 进行替换的char值的序列
+     * @return  一个字符串对象
+     */
     public String replace(CharSequence target, CharSequence replacement) {
+        //Matcher.quoteReplacement方法取消显示这些字符的特殊含义。（这些字符包括反斜杠、美元符等）
         return Pattern.compile(target.toString(), Pattern.LITERAL).matcher(
                 this).replaceAll(Matcher.quoteReplacement(replacement.toString()));
     }
@@ -2390,6 +2459,18 @@ public final class String
      * @since 1.4
      * @spec JSR-51
      */
+    /**
+     * 1、在给定的<a href="../util/regex/Pattern.html#sum">正则表达式</a>的匹配项周围拆分此字符串。
+     * 2、此方法返回的数组包含此字符串的每个子字符串，该子字符串由与给定表达式匹配的另一个子字符串终止或由字符串的结尾终止。
+     *   数组中的子字符串按照它们在此字符串中出现的顺序排列。
+     *   如果表达式与输入的任何部分都不匹配，则结果数组只有一个元素，即此字符串。
+     * 3、如果此字符串的开头存在正好匹配的字符串，则在结果数组的开头将包含一个空的前导子字符串。
+     *   开头的没有匹配上永远不会产生这样的空的子字符串。
+     * 4、
+     * @param regex   分隔的正则表达式
+     * @param limit   拆分的个数上限
+     * @return
+     */
     public String[] split(String regex, int limit) {
         /* fastpath if the regex is a
          (1)one-char String and this character is not one of the
@@ -2398,6 +2479,13 @@ public final class String
             the second is not the ascii digit or ascii letter.
          */
         char ch = 0;
+        /*
+          如果正则表达式是:
+           a、一个字符的字符串，并且此字符不是以下字符之一
+              RegEx的元字符“。$ |（）[{^？* + \\”。
+           b、两个字符的字符串，第一个字符是反斜杠，
+              第二个不是ASCII数字或ASCII字母。
+         */
         if (((regex.value.length == 1 &&
                 ".$|()[{^?*+\\".indexOf(ch = regex.charAt(0)) == -1) ||
                 (regex.length() == 2 &&

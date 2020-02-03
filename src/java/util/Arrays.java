@@ -2531,25 +2531,47 @@ public class Arrays {
     }
 
     // Like public version, but without range checks.
+
+    /**
+     *
+     * @param a    要搜索的数组
+     * @param fromIndex   从那里开始搜索，默认是0
+     * @param toIndex  搜索到何时停止，默认是数组大小
+     * @param key  需要搜索的值
+     * @param c    外部比较器
+     * @param <T>
+     * @return
+     */
     private static <T> int binarySearch0(T[] a, int fromIndex, int toIndex,
                                          T key, Comparator<? super T> c) {
+        // 如果比较器 c 是空的，直接使用 key 的 Comparable.compareTo 方法进行排序
+        // 假设 key 类型是 String 类型，String 默认实现了 Comparable 接口，就可以直接使用 compareTo 方法进行排序
         if (c == null) {
+            // 这是另外一个方法，使用内部排序器进行比较的方法
             return binarySearch0(a, fromIndex, toIndex, key);
         }
         int low = fromIndex;
         int high = toIndex - 1;
 
+        // 开始位置小于结束位置，就会一直循环搜索
         while (low <= high) {
+            // 假设 low =0，high =10，那么 mid 就是 5，所以说二分的意思主要在这里，每次都是计算索引的中间值
             int mid = (low + high) >>> 1;
             T midVal = a[mid];
+            // 比较数组中间值和给定的值的大小关系
             int cmp = c.compare(midVal, key);
+            // 如果数组中间值小于给定的值，说明我们要找的值在中间值的右边
             if (cmp < 0)
                 low = mid + 1;
-            else if (cmp > 0)
+            else if (cmp > 0) {
+                // 我们要找的值在中间值的左边
                 high = mid - 1;
+            }
             else
+                // 找到了
                 return mid; // key found
         }
+        // 返回的值是负数，表示没有找到
         return -(low + 1);  // key not found.
     }
 
@@ -3664,20 +3686,22 @@ public class Arrays {
      *    来自原始数组中后续元素的值将放入副本中的后续元素中。 范围（<tt>to/ tt>）的最终下标（必须大于或等于<tt> from </ tt>），
      *    可能大于<tt> original.length </ tt>，在这种情况下，将<tt>'\\ u000'</ tt>放置在副本的所有下标大于或等于<tt> original.length-from </ tt>的元素中。
      *    返回数组的长度为<tt>to-from </ tt>。
-     * @param original  要从中复制数据的原始数组
-     * @param from  开始复制的初始下标(包括)
-     * @param to  结束复制的结束下标(此下标可能位于数组之外。）
+     * @param original  要从中复制数据的原始数组           原始数组数据
+     * @param from  开始复制的初始下标(包括)               拷贝起点
+     * @param to  结束复制的结束下标(此下标可能位于数组之外。）  拷贝终点
      * @return 一个包含原始数组中指定范围的新数组，将其截断或填充空字符以获取所需的长度
      */
     public static char[] copyOfRange(char[] original, int from, int to) {
-        //新字符串的长度
+        //需要拷贝的长度
         int newLength = to - from;
         //新字符串小于0，则抛不合法的参数异常
         if (newLength < 0)
             throw new IllegalArgumentException(from + " > " + to);
-        //创建新字符串长度的字符数组
+        // 初始化新字符数组
         char[] copy = new char[newLength];
-        //
+
+        // 调用 native 方法进行拷贝
+        // 参数的意思分别是：被拷贝的数组、从数组哪里开始、目标数组、从目的数组哪里开始拷贝、拷贝的长度
         System.arraycopy(original, from, copy, 0,
                          Math.min(original.length - from, newLength));
         return copy;
@@ -4290,6 +4314,12 @@ public class Arrays {
         return true;
     }
 
+    /**
+     * 对各种类型数组的判断
+     * @param e1
+     * @param e2
+     * @return
+     */
     static boolean deepEquals0(Object e1, Object e2) {
         assert e1 != null;
         boolean eq;

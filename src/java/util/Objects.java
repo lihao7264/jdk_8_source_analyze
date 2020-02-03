@@ -55,7 +55,14 @@ public final class Objects {
      * and {@code false} otherwise
      * @see Object#equals(Object)
      */
+    /**
+     * 注意：当前方法是对于普通对象的相等判断
+     * @param a
+     * @param b
+     * @return
+     */
     public static boolean equals(Object a, Object b) {
+
         return (a == b) || (a != null && a.equals(b));
     }
 
@@ -76,12 +83,21 @@ public final class Objects {
     * @see Arrays#deepEquals(Object[], Object[])
     * @see Objects#equals(Object, Object)
     */
+    /**
+     * 注意：当前方法是对数组对象的相等判断
+     * @param a
+     * @param b
+     * @return
+     */
     public static boolean deepEquals(Object a, Object b) {
+        //内存地址相等，则相等
         if (a == b)
             return true;
+        //两个对象有一个为null，则不相同
         else if (a == null || b == null)
             return false;
         else
+            //对各种类型数组的判断
             return Arrays.deepEquals0(a, b);
     }
 

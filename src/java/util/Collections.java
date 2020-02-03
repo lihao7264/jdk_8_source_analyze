@@ -666,15 +666,28 @@ public class Collections {
      * @throws NoSuchElementException if the collection is empty.
      * @see Comparable
      */
+    /**
+     * 1、根据其元素的自然顺序返回给定集合的最大元素。
+     * 2、集合中的所有元素都必须实现 Comparable 接口。
+     * 3、此外，集合中的所有元素必须相互可比（即 e1.compareTo（e2）不得抛出 ClassCastException （对于集合中的任何e1和e2 元素）。
+     * 4、
+     * @param coll  要确定其最大元素的集合。
+     * @param <T>   集合中对象的类
+     * @return 给定集合的最大元素，根据其元素的自然顺序。
+     */
     public static <T extends Object & Comparable<? super T>> T max(Collection<? extends T> coll) {
+        //获取集合的迭代器
         Iterator<? extends T> i = coll.iterator();
+        //候选数据
         T candidate = i.next();
-
+        //通过迭代器进行遍历
         while (i.hasNext()) {
             T next = i.next();
+            //如果当前的数据大于候选数据，则替换候选数据
             if (next.compareTo(candidate) > 0)
                 candidate = next;
         }
+        //返回最终数据
         return candidate;
     }
 
@@ -703,17 +716,22 @@ public class Collections {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <T> T max(Collection<? extends T> coll, Comparator<? super T> comp) {
+        //如果外部比较器没有，则调用java.util.Collections#max(Collection<? extends T>)方法
         if (comp==null)
             return (T)max((Collection) coll);
-
+        //获取集合的迭代器
         Iterator<? extends T> i = coll.iterator();
+        //候选数据
         T candidate = i.next();
-
+        //通过迭代器进行遍历
         while (i.hasNext()) {
             T next = i.next();
+            //使用外部比较器进行比较
+            //如果当前的数据大于候选数据，则替换候选数据
             if (comp.compare(next, candidate) > 0)
                 candidate = next;
         }
+        //返回最终数据
         return candidate;
     }
 
@@ -1293,6 +1311,11 @@ public class Collections {
 
     /**
      * @serial include
+     */
+    /**
+     * 不可变的List类
+     *  1、开放了查询方法，其它任何修改操作都会抛出异常
+     * @param <E>
      */
     static class UnmodifiableList<E> extends UnmodifiableCollection<E>
                                   implements List<E> {
@@ -2390,11 +2413,16 @@ public class Collections {
     /**
      * @serial include
      */
+    /**
+     * 底层的所有方法都加上了synchronized关键字
+     * @param <E>
+     */
     static class SynchronizedList<E>
         extends SynchronizedCollection<E>
         implements List<E> {
         private static final long serialVersionUID = -7754090372962971524L;
 
+        //这个list就是我们需要保证线程安全的类
         final List<E> list;
 
         SynchronizedList(List<E> list) {

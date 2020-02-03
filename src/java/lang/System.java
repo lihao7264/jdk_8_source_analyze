@@ -493,13 +493,13 @@ public final class System {
 
     /**
      * 1、本地方法
-     * 2、方法介绍：
+     * 2、方法介绍：从指定的源数组（从指定位置开始）复制数组到目标数组的指定位置。
      *
-     * @param src
-     * @param srcPos
-     * @param dest
-     * @param destPos
-     * @param length
+     * @param src     源数组
+     * @param srcPos  源数组中的起始位置
+     * @param dest    目标数组
+     * @param destPos 目标数据中的起始位置
+     * @param length  要复制的数组元素的数量
      */
     public static native void arraycopy(Object src,  int  srcPos,
                                         Object dest, int destPos,

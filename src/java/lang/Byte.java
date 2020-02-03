@@ -48,6 +48,7 @@ package java.lang;
  *  3、此外，此类提供了几种将{@code byte}转换为{@code String}和将{@code String}转换为{@code Byte}的方法，以及在以下情况下有用的其他常量和方法。
  *  4、Byte类主要的作用就是对基本类型byte进行封装，提供了一些处理byte类型的方法。
  *    比如：byte到String类型的转换方法或String类型到byte类型的转换方法，当然也包含与其他类型之间的转换方法。
+ *  5、也是一个不可变类
  */
 public final class Byte extends Number implements Comparable<Byte> {
 
@@ -107,7 +108,7 @@ public final class Byte extends Number implements Comparable<Byte> {
     private static class ByteCache {
         private ByteCache(){}
 
-        //初始化一个(128+127-1)大小的Byte数组
+        //初始化一个(128+127+1)大小的Byte数组(因为有个0)
         static final Byte cache[] = new Byte[-(-128) + 127 + 1];
 
         //静态代码块填充Byte缓存数组中的值   注意：执行顺序：静态代码块>构造代码块>构造方法

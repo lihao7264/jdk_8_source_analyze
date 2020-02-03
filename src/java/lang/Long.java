@@ -51,6 +51,16 @@ import java.math.*;
  * @author  Joseph D. Darcy
  * @since   JDK1.0
  */
+
+/**
+ * 1、{@code Long}类在对象中包装了基础类型{@code long}的值。
+ *   类型为{@code Long}的对象包含一个类型为{@code long}的字段。
+ * 2、此外，此类还提供了几种将{@code long}转换为{@code String}以及将{@code String}转换为{@code long}的方法，
+ *   以及其他处理{@code long}的时候所需的常量和方法。
+ * 3、Long类也是一个不可变类
+ *
+ * 2、
+ */
 public final class Long extends Number implements Comparable<Long> {
     /**
      * A constant holding the minimum value a {@code long} can
@@ -803,12 +813,18 @@ public final class Long extends Number implements Comparable<Long> {
         return Long.valueOf(parseLong(s, 10));
     }
 
+    /**
+     * 静态内部类：LongCache类
+     */
     private static class LongCache {
         private LongCache(){}
 
+        //缓存，范围从 -128 到 127，+1 是因为有个 0
         static final Long cache[] = new Long[-(-128) + 127 + 1];
 
+        // 容器初始化时，进行加载
         static {
+            //缓存 Long 值，注意这里是 i - 128 ，所以在拿的时候就需要 + 128
             for(int i = 0; i < cache.length; i++)
                 cache[i] = new Long(i - 128);
         }

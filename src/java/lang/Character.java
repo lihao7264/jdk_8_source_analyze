@@ -147,6 +147,11 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @see     Integer#toString(int, int)
      * @see     Integer#valueOf(String)
      */
+    /**
+     * 1、可用于在字符串之间进行转换的最小基数。
+     *    此字段的常数是基数转换方法（例如{@code digit}方法，{@ code forDigit}方法和 类{@code Integer}的{@code toString}方法。
+     * 2、最小进制
+     */
     public static final int MIN_RADIX = 2;
 
     /**
@@ -161,6 +166,12 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @see     Integer#toString(int, int)
      * @see     Integer#valueOf(String)
      */
+    /**
+     * 1、可用于在字符串之间进行转换的最大基数。
+     *   此字段的常数是基数转换方法（例如{@code digit}方法，{@ code forDigit}方法和 类{@code Integer}的{@code toString}方法。
+     *
+     * 2、最大进制36进制
+     */
     public static final int MAX_RADIX = 36;
 
     /**
@@ -169,6 +180,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since   1.0.2
      */
+    /**
+     * 这个字段的常量值是char的最小值 {@code '\u005Cu0000'}
+     */
     public static final char MIN_VALUE = '\u0000';
 
     /**
@@ -176,6 +190,11 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * {@code char}, {@code '\u005CuFFFF'}.
      *
      * @since   1.0.2
+     */
+    /**
+     * 1、这个字段的常量值是char的最大值 {@code '\u005CuFFFF'}
+     *
+     *   注意：char是16位的，所以对应4个16进制的数字。
      */
     public static final char MAX_VALUE = '\uFFFF';
 
@@ -512,6 +531,10 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since 1.5
      */
+    /**
+     * Unicode 的UTF-16编码的高代理代码单元的最小值，常量{@code '\u005CuD800'}
+     * 一个高代理同样也是一个领导代理。
+     */
     public static final char MIN_HIGH_SURROGATE = '\uD800';
 
     /**
@@ -522,6 +545,10 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * A high-surrogate is also known as a <i>leading-surrogate</i>.
      *
      * @since 1.5
+     */
+    /**
+     * Unicode 的UTF-16编码的高代理代码单元的最大值，常量{@code '\u005CuDBFF'}
+     * 一个高代理同样也是一个领导代理。
      */
     public static final char MAX_HIGH_SURROGATE = '\uDBFF';
 
@@ -534,6 +561,11 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since 1.5
      */
+    /**
+     *  Unicode 的UTF-16编码的低代理代码单元的最小值，常量{@code '\u005CuDC00'}
+     *  一个低代理同样也是一个跟随代理。
+     *  可以看到高代理和低代理是连起来的，先是高代理，然后是低代理。
+     */
     public static final char MIN_LOW_SURROGATE  = '\uDC00';
 
     /**
@@ -545,6 +577,10 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since 1.5
      */
+    /**
+     * Unicode 的UTF-16编码的低代理代码单元的最大值，常量{@code '\u005CuDFFF'}
+     * 一个低代理同样也是一个跟随代理。
+     */
     public static final char MAX_LOW_SURROGATE  = '\uDFFF';
 
     /**
@@ -553,6 +589,10 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since 1.5
      */
+    /**
+     * Unicode 的UTF-16编码的代理代码单元的最小值，常量{@code '\u005CuD800'}
+     * 可以看到高代理和低代理是连起来的，先是高代理，然后是低代理
+     */
     public static final char MIN_SURROGATE = MIN_HIGH_SURROGATE;
 
     /**
@@ -560,6 +600,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * UTF-16 encoding, constant {@code '\u005CuDFFF'}.
      *
      * @since 1.5
+     */
+    /**
+     * Unicode 的UTF-16编码的代理代码单元的最大值，常量{@code '\u005CuDFFF'}
      */
     public static final char MAX_SURROGATE = MAX_LOW_SURROGATE;
 
@@ -570,6 +613,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since 1.5
      */
+    /**
+     *  Unicode补充代码点的最小值，常量{@code U+10000}
+     */
     public static final int MIN_SUPPLEMENTARY_CODE_POINT = 0x010000;
 
     /**
@@ -579,6 +625,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since 1.5
      */
+    /**
+     * Unicode代码点的最小值，常量{@code U+0000}
+     */
     public static final int MIN_CODE_POINT = 0x000000;
 
     /**
@@ -587,6 +636,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * Unicode code point</a>, constant {@code U+10FFFF}.
      *
      * @since 1.5
+     */
+    /**
+     * Unicode代码点的最大值，常量{@code U+10FFFF}
      */
     public static final int MAX_CODE_POINT = 0X10FFFF;
 
@@ -4540,6 +4592,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @serial
      */
+    /**
+     * Character的值
+     */
     private final char value;
 
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
@@ -7197,6 +7252,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *
      * @since 1.5
      */
+    /**
+     * 用来表示一个char值在无符号的二进制形式下，使用的bit（位）的数量，常量16
+     */
     public static final int SIZE = 16;
 
     /**
@@ -7204,6 +7262,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * binary form.
      *
      * @since 1.8
+     */
+    /**
+     * 用来表示一个char值在无符号的二进制形式下，使用的byte（字节）的数量，常量2
      */
     public static final int BYTES = SIZE / Byte.SIZE;
 
