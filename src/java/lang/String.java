@@ -873,7 +873,8 @@ public final class String
      *    文本范围内的不成对代理每个都计为一个代码点。
      * @param beginIndex   文本范围的第一个char的下标。
      * @param endIndex   文本范围的最后一个char之后的索引。
-     * @return 指定文本范围内的Unicode代码点数
+     * @return 指定文本范围内的字符个数
+     *
      */
     public int codePointCount(int beginIndex, int endIndex) {
         //若开始下标小于0或者结束下标大于字符数组长度或者开始下标大于结束下标，则抛出异常
