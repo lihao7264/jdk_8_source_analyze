@@ -765,6 +765,7 @@ public final class String
         if ((index < 0) || (index >= value.length)) {
             throw new StringIndexOutOfBoundsException(index);
         }
+        //从字符数组中获取
         return value[index];
     }
 
@@ -790,7 +791,17 @@ public final class String
      *             string.
      * @since 1.5
      */
+    /**
+     * 1、返回指定下标处的字符（Unicode值）。
+     *    下标引用char值（Unicode代码单位），范围从0到{@link #length()}-1。
+     * 2、如果在给定下标处指定的char值在高代理范围内，则以下下标小于此String的长度，
+     *   并且在以下下标处的char值是在低代理范围内，则返回与此代理对相对应的补充代码点。
+     *   否则，将返回给定下标处的char值。
+     * @param index
+     * @return
+     */
     public int codePointAt(int index) {
+        //检测是否数组下面越界
         if ((index < 0) || (index >= value.length)) {
             throw new StringIndexOutOfBoundsException(index);
         }
@@ -819,7 +830,14 @@ public final class String
      *            of this string.
      * @since 1.5
      */
+    /**
+     * 1、用于返回指定下标值前一个字符的unicode值。
+     *   实现与java.lang.String#codePointAt(int)类似
+     * @param index
+     * @return
+     */
     public int codePointBefore(int index) {
+        //下标值减1
         int i = index - 1;
         if ((i < 0) || (i >= value.length)) {
             throw new StringIndexOutOfBoundsException(index);
@@ -848,7 +866,17 @@ public final class String
      * {@code beginIndex} is larger than {@code endIndex}.
      * @since 1.5
      */
+    /**
+     * 1、返回此String的指定文本范围内的字符个数。(指定下标范围内)
+     *    文本范围从指定的beginIndex开始，并扩展到下标 endIndex-1的char。
+     *    因此，文本范围的长度（以{@code char} s为单位）为 endIndex-beginIndex。
+     *    文本范围内的不成对代理每个都计为一个代码点。
+     * @param beginIndex   文本范围的第一个char的下标。
+     * @param endIndex   文本范围的最后一个char之后的索引。
+     * @return 指定文本范围内的Unicode代码点数
+     */
     public int codePointCount(int beginIndex, int endIndex) {
+        //若开始下标小于0或者结束下标大于字符数组长度或者开始下标大于结束下标，则抛出异常
         if (beginIndex < 0 || endIndex > value.length || beginIndex > endIndex) {
             throw new IndexOutOfBoundsException();
         }

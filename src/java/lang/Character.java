@@ -614,7 +614,7 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @since 1.5
      */
     /**
-     *  Unicode补充代码点的最小值，常量{@code U+10000}
+     *  Unicode补码的最小值，常量{@code U+10000}
      */
     public static final int MIN_SUPPLEMENTARY_CODE_POINT = 0x010000;
 
@@ -4797,6 +4797,15 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @see    Character.UnicodeBlock#of(int)
      * @since  1.5
      */
+    /**
+     * 1、判断一个字符是否是一个Unicode扩展字符的高16位编码
+     *
+     * 2、确定给定的char值是否为<a href="http://www.unicode.org/glossary/#high_surrogate_code_unit"> Unicode高代理代码单元</a>（也称为前导代理代码单元）。
+     * 3、这样的值本身并不表示字符，而是用于UTF-16编码中的<a href="#supplementary">补充字符</a>。
+     * @param ch  被进行测试的char值
+     * @return  true，如果char值介于{@link #MIN_HIGH_SURROGATE}和{@link #MAX_HIGH_SURROGATE}之间；
+     *          否则false
+     */
     public static boolean isHighSurrogate(char ch) {
         // Help VM constant-fold; MAX_HIGH_SURROGATE + 1 == MIN_LOW_SURROGATE
         return ch >= MIN_HIGH_SURROGATE && ch < (MAX_HIGH_SURROGATE + 1);
@@ -4820,6 +4829,14 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *         {@code false} otherwise.
      * @see    Character#isHighSurrogate(char)
      * @since  1.5
+     */
+    /**
+     * 1、判断一个字符是否是一个Unicode扩展字符的低16位编码
+     *
+     * 2、确定给定的char值是否为<a href="http://www.unicode.org/glossary/#low_surrogate_code_unit"> Unicode低代理代码单元</a>（也称为<i> 尾随代理代码单元</ i>）。
+     * 3、这样的值本身并不代表字符，而是用于UTF-16编码中的<a href="#supplementary">补充字符</a>。
+     * @param ch
+     * @return  被进行测试的char值
      */
     public static boolean isLowSurrogate(char ch) {
         return ch >= MIN_LOW_SURROGATE && ch < (MAX_LOW_SURROGATE + 1);
@@ -4902,6 +4919,14 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @return the supplementary code point composed from the
      *         specified surrogate pair.
      * @since  1.5
+     */
+    /**
+     * 1、将指定的代理对转换为其补码值。
+     *    此方法不验证指定的代理对。
+     *    如有必要，调用者必须使用{@link #isSurrogatePair（char，char）isSurrogatePair}对其进行验证。
+     * @param high  高代理代码单元
+     * @param low   低代理代码单元
+     * @return 由指定的代理对组成的补码。
      */
     public static int toCodePoint(char high, char low) {
         // Optimized form of:
@@ -5004,10 +5029,22 @@ class Character implements java.io.Serializable, Comparable<Character> {
     }
 
     // throws ArrayIndexOutOfBoundsException if index out of bounds
+
+    /**
+     *
+     * @param a
+     * @param index
+     * @param limit
+     * @return
+     */
     static int codePointAtImpl(char[] a, int index, int limit) {
+        //获取传入的char[]a中的 数组index下标值
         char c1 = a[index];
+        //index的char在高代理范围内且index+1小于limit
         if (isHighSurrogate(c1) && ++index < limit) {
+            //获取index+1的字符
             char c2 = a[index];
+            //a[index+1]在低代理范围内，就返回增补字符的代码
             if (isLowSurrogate(c2)) {
                 return toCodePoint(c1, c2);
             }
@@ -5317,6 +5354,13 @@ class Character implements java.io.Serializable, Comparable<Character> {
         return codePointCountImpl(a, offset, count);
     }
 
+    /**
+     *
+     * @param a
+     * @param offset
+     * @param count
+     * @return
+     */
     static int codePointCountImpl(char[] a, int offset, int count) {
         int endIndex = offset + count;
         int n = count;
