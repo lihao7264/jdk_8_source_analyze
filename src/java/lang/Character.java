@@ -5475,7 +5475,9 @@ class Character implements java.io.Serializable, Comparable<Character> {
     static int offsetByCodePointsImpl(char[]a, int start, int count,
                                       int index, int codePointOffset) {
         int x = index;
+        //当 codePointOffset 大于等于0时，通过 for 循环递增索引值，判断如果存在 High-surrogate 代码和 Low-surrogate 代码则下标值还需额外加1。
         if (codePointOffset >= 0) {
+            //这里就是结束下标
             int limit = start + count;
             int i;
             for (i = 0; x < limit && i < codePointOffset; i++) {
@@ -5488,6 +5490,7 @@ class Character implements java.io.Serializable, Comparable<Character> {
                 throw new IndexOutOfBoundsException();
             }
         } else {
+            //当 codePointOffset 小于0时，通过 for 循环递减下标值，判断如果存在 High-surrogate 代码和 Low-surrogate 代码则下标值还需额外减1。
             int i;
             for (i = codePointOffset; x > start && i < 0; i++) {
                 if (isLowSurrogate(a[--x]) && x > start &&

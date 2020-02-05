@@ -381,6 +381,7 @@ class StringCoding {
     }
 
     static byte[] encode(char[] ca, int off, int len) {
+        // 使用 JVM 默认编码
         String csn = Charset.defaultCharset().name();
         try {
             // use charset name encode() variant which provides caching.

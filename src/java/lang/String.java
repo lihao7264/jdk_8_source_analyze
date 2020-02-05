@@ -872,7 +872,7 @@ public final class String
      *    因此，文本范围的长度（以{@code char} s为单位）为 endIndex-beginIndex。
      *    文本范围内的不成对代理每个都计为一个代码点。
      * @param beginIndex   文本范围的第一个char的下标。
-     * @param endIndex   文本范围的最后一个char之后的索引。
+     * @param endIndex   文本范围的最后一个char之后的下标。
      * @return 指定文本范围内的字符个数
      *
      */
@@ -904,10 +904,20 @@ public final class String
      *   of {@code codePointOffset} code points.
      * @since 1.5
      */
+    /**
+     * 1、返回此String中的下标，该下标与给定的index偏移codePointOffset个代码点。
+     *   index和codePointOffset给出的文本范围内的不成对的替代项分别计为一个代码点。
+     *
+     * @param index  要偏移的下标
+     * @param codePointOffset  代码点的偏移量
+     * @return 此字符串中的下标
+     */
     public int offsetByCodePoints(int index, int codePointOffset) {
+        //校验下标是否越界
         if (index < 0 || index > value.length) {
             throw new IndexOutOfBoundsException();
         }
+
         return Character.offsetByCodePointsImpl(value, 0, value.length,
                 index, codePointOffset);
     }
@@ -915,6 +925,11 @@ public final class String
     /**
      * Copy characters from this string into dst starting at dstBegin.
      * This method doesn't perform any range checking.
+     */
+    /**
+     * 1、从dstBegin开始，将字符串中的字符复制到dst中。 此方法不执行任何范围检查。
+     * @param dst      目标数组
+     * @param dstBegin  目标数据中的起始位置
      */
     void getChars(char dst[], int dstBegin) {
         System.arraycopy(value, 0, dst, dstBegin, value.length);
@@ -950,13 +965,33 @@ public final class String
      *            <li>{@code dstBegin+(srcEnd-srcBegin)} is larger than
      *                {@code dst.length}</ul>
      */
+    /**
+     * 1、将字符串中的字符复制到目标字符数组中。
+     * 2、要复制的第一个字符在下标srcBegin处；
+     *    最后要复制的字符位于下标srcEnd-1（因此，要复制的字符总数为srcEnd-srcBegin）。
+     *    字符被复制到dst的子数组中，从下标dstBegin开始，到下标处结束 = dstBegin +（srcEnd-srcBegin）-1
+     *
+     * @param srcBegin  要复制的字符串中第一个字符的下标
+     * @param srcEnd    要复制的字符串中最后一个字符之后的下标
+     * @param dst       目标数组
+     * @param dstBegin  目标数组中的起始偏移量
+     *
+     * 如果以下任一情况为真： a、srcBegin为负。
+     *                      b、srcBegin大于srcEnd
+     *                      c、srcEnd大于此字符串的长度
+     *                      d、dstBegin为负
+     *                      e、dstBegin +（ srcEnd-srcBegin）大于dst.length
+     */
     public void getChars(int srcBegin, int srcEnd, char dst[], int dstBegin) {
+        //srcBegin为负,则抛下标越界异常
         if (srcBegin < 0) {
             throw new StringIndexOutOfBoundsException(srcBegin);
         }
+        //srcEnd大于此字符串的长度,则抛下标越界异常
         if (srcEnd > value.length) {
             throw new StringIndexOutOfBoundsException(srcEnd);
         }
+        //srcBegin大于srcEnd,则抛下标越界异常
         if (srcBegin > srcEnd) {
             throw new StringIndexOutOfBoundsException(srcEnd - srcBegin);
         }
@@ -1050,7 +1085,7 @@ public final class String
      * @since JDK1.1
      */
     /**
-     * 使用命名的字符集将此字符串编码为字节序列，并将结果存储到新的字节数组中。
+     * 1、使用命名的字符集将此字符串编码为字节序列，并将结果存储到新的字节数组中。
      *
      *注意：未指定无法在给定字符集中编码此字符串时此方法的行为。 如果需要对编码过程进行更多控制，则应使用{@link java.nio.charset.CharsetEncoder}类。
      * @param charsetName  字符集名称
@@ -1081,6 +1116,12 @@ public final class String
      *
      * @since 1.6
      */
+    /**
+     * 1、使用给定的{@linkplain java.nio.charset.Charset charset}将此String编码为字节序列，并将结果存储到新的字节数组中。
+     * 2、此方法始终使用此字符集的默认替换字节数组替换格式错误的输入和不可映射的字符序列。 如果需要对编码过程进行更多控制，则应使用{@link java.nio.charset.CharsetEncoder}类。
+     * @param charset   {@linkplain java.nio.charset.Charset}用于对{@code String}进行编码
+     * @return  返回字节数组
+     */
     public byte[] getBytes(Charset charset) {
         if (charset == null) throw new NullPointerException();
         return StringCoding.encode(charset, value, 0, value.length);
@@ -1098,6 +1139,13 @@ public final class String
      * @return The resultant byte array
      *
      * @since JDK1.1
+     */
+    /**
+     * 1、使用平台的默认字符集将此String编码为字节序列，并将结果存储到新的字节数组中。
+     *
+     * 注意：未指定在默认字符集中无法编码此字符串时此方法的行为。
+     *      如果需要对编码过程进行更多控制，则应使用{@link java.nio.charset.CharsetEncoder}类。
+     * @return  返回字节数组
      */
     public byte[] getBytes() {
         return StringCoding.encode(value, 0, value.length);
@@ -1169,6 +1217,13 @@ public final class String
      *
      * @since 1.4
      */
+    /**
+     * 1、将此字符串与指定的StringBuffer比较。
+     *   当且仅当此String表示与指定的StringBuffer相同的字符序列时，结果为true。
+     *   此方法在StringBuffer上同步。
+     * @param sb  将与此String比较的StringBuffer
+     * @return 如果此{@code字符串}表示与指定的{@code StringBuffer}相同的字符序列，则为true，否则为false
+     */
     public boolean contentEquals(StringBuffer sb) {
         return contentEquals((CharSequence) sb);
     }
@@ -1177,9 +1232,11 @@ public final class String
         char v1[] = value;
         char v2[] = sb.getValue();
         int n = v1.length;
+        //判断两个长度不相等,则返回 false
         if (n != sb.length()) {
             return false;
         }
+        //一个一个字符进行比较，若有一个字符不相等，则返回false
         for (int i = 0; i < n; i++) {
             if (v1[i] != v2[i]) {
                 return false;
@@ -1206,25 +1263,34 @@ public final class String
      */
     public boolean contentEquals(CharSequence cs) {
         // Argument is a StringBuffer, StringBuilder
+        // 是否由 AbstractStringBuilder 实例化出来，是的话表示它为 StringBuilder 或 StringBuffer 对象。
         if (cs instanceof AbstractStringBuilder) {
+            //如果为 StringBuffer 对象，说明它是线程安全的，需要做同步处理，调用nonSyncContentEquals方法。
             if (cs instanceof StringBuffer) {
                 synchronized (cs) {
                     return nonSyncContentEquals((AbstractStringBuilder) cs);
                 }
             } else {
+                // 如果为 StringBuilder 对象，它是非线程安全的，直接调用nonSyncContentEquals方法。
                 return nonSyncContentEquals((AbstractStringBuilder) cs);
             }
         }
         // Argument is a String
+        // 如果为 String 对象，则调用equals方法比较
         if (cs instanceof String) {
             return equals(cs);
         }
         // Argument is a generic CharSequence
+        // 接下来是属于 CharSequence 对象时的逻辑
+        //当前字符串的字符数组
         char v1[] = value;
+        //当前字符串的字符数组的长度
         int n = v1.length;
+        //若字符数组长度不等于CharSequence对象的长度，则返回false
         if (n != cs.length()) {
             return false;
         }
+        //for循环比较每一个字符，如果有一个字符不相同，则返回false
         for (int i = 0; i < n; i++) {
             if (v1[i] != cs.charAt(i)) {
                 return false;
