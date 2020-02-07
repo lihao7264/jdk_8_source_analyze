@@ -615,6 +615,8 @@ class Character implements java.io.Serializable, Comparable<Character> {
      */
     /**
      *  Unicode补码的最小值，常量{@code U+10000}
+     *  也就是最多占用两个字节
+     *
      */
     public static final int MIN_SUPPLEMENTARY_CODE_POINT = 0x010000;
 
@@ -4735,9 +4737,16 @@ class Character implements java.io.Serializable, Comparable<Character> {
      *         {@code false} otherwise.
      * @since  1.5
      */
+    /**
+     *1、确定指定的代码点是否为有效的Unicode代码点值(地址：http://www.unicode.org/glossary/#code_point)
+     * @param codePoint  要测试的Unicode代码点
+     * @return  如果指定的代码点值在MIN_CODE_POINT与MAX_CODE_POINT之间（包括两端），则为true；
+     *         否则false。
+     */
     public static boolean isValidCodePoint(int codePoint) {
         // Optimized form of:
         //     codePoint >= MIN_CODE_POINT && codePoint <= MAX_CODE_POINT
+        // codePoint >= MIN_CODE_POINT && codePoint <= MAX_CODE_POINT  也就是  确定指定的代码点是否为从 0x0000 到 0x10FFFF 范围之内的有效 Unicode 代码点值
         int plane = codePoint >>> 16;
         return plane < ((MAX_CODE_POINT + 1) >>> 16);
     }
@@ -5178,6 +5187,14 @@ class Character implements java.io.Serializable, Comparable<Character> {
      * @return  the leading surrogate code unit used to represent the
      *          character in the UTF-16 encoding
      * @since   1.7
+     */
+    /**
+     * 1、返回前导代理(<a href="http://www.unicode.org/glossary/#high_surrogate_code_unit">高代理代码单元</a>）<a href="http://www.unicode.org/glossary/#surrogate_pair"> 替代对</a>，以UTF-16编码表示指定的补充字符（Unicode代码点）。
+     *   如果指定的字符不是<a href="Character.html#supplementary">补充字符</a>，则返回未指定的char。
+     * 2、如果#isSupplementaryCodePoint isSupplementaryCodePoint(x)为true，则#isHighSurrogate isHighSurrogate  highSurrogate(x)和toCodePoint toCodePointhighSurrogate(x) #lowSurrogate lowSurrogate code(x)== x}，也总是true。
+     *
+     * @param codePoint  补充字符（Unicode代码点）
+     * @return 返回用于代表UTF-16编码中字符的前导代理代码单元
      */
     public static char highSurrogate(int codePoint) {
         return (char) ((codePoint >>> 10)
