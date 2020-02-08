@@ -2012,6 +2012,18 @@ public final class String
      * character sequence represented by this object, or
      * {@code -1} if the character does not occur.
      */
+    /**
+     * 1、该方法用于返回指定字符在此字符串中最后一次出现处的下标
+     *
+     * 2、返回指定字符在此字符串内最后一次出现的的下标。
+     *   对于ch的值，范围从0到0xFFFF（包括），返回的下标（以Unicode代码为单位）是最大值k，
+     *   这样：this .charAt(k)== ch为true。
+     *   对于ch的其他值，它是最大值k，使得：this.codePointAt(k)== ch 是真的。
+     *   无论哪种情况，如果该字符串中均未出现此类字符，则返回-1。
+     *   String从最后一个字符开始向后搜索。
+     * @param ch  字符（Unicode代码点）
+     * @return 此对象表示的字符序列中字符最后一次出现的下标，如果未出现字符，则返回-1。
+     */
     public int lastIndexOf(int ch) {
         return lastIndexOf(ch, value.length - 1);
     }
@@ -2050,19 +2062,39 @@ public final class String
      * than or equal to {@code fromIndex}, or {@code -1}
      * if the character does not occur before that point.
      */
+    /**
+     * 1、返回指定字符在此字符串内最后一次出现的下标，从指定下标开始向前搜索。
+     *    对于ch的值，范围是0到0xFFFF（包括0），返回的下标是最大值k，这样：（this.charAt(k)== ch)&&(k<=fromIndex)为true。
+     *    对于ch的其他值，它是最大值k，使得：(this.codePointAt(k)== ch)&&(k <= fromIndex）为true。
+     *    无论哪种情况，如果在位置fromIndex或之前在此字符串中没有出现这样的字符，则返回-1。
+     *  2、所有下标均以char值（Unicode代码单位）指定。
+     * @param ch     字符（Unicode代码点）。
+     * @param fromIndex  开始搜索的下标。
+     *                   fromIndex的值没有限制。
+     *                   如果它大于或等于此字符串的长度，则具有与小于等于此字符串的长度的相同的效果：可以搜索整个字符串。
+     *                   如果为负，则其效果与-1相同：返回-1。
+     * @return  小于或等于fromIndex或-1，字符在该对象表示的字符序列中最后一次出现的下标，如果该字符未在该点之前出现，则返回-1。
+     */
     public int lastIndexOf(int ch, int fromIndex) {
+        //一个char占用两个字节，如果ch小于2的16次方（65536），绝大多数字符都在此范围内
         if (ch < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
             // handle most cases here (ch is a BMP code point or a
             // negative value (invalid code point))
+            //获取当前字符串的字符数组
             final char[] value = this.value;
+            //获取开始搜索的下标与字符串长度的最小值
             int i = Math.min(fromIndex, value.length - 1);
+            //从最小下标进行遍历比较，从后往前搜索
             for (; i >= 0; i--) {
+                //若匹配，则返回指定下标
                 if (value[i] == ch) {
                     return i;
                 }
             }
+            //不存在相等的字符，则返回-1
             return -1;
         } else {
+            //当字符大于 65536时，处理的少数情况，该方法会首先判断是否是有效字符，然后依次进行比较
             return lastIndexOfSupplementary(ch, fromIndex);
         }
     }
@@ -2070,18 +2102,31 @@ public final class String
     /**
      * Handles (rare) calls of lastIndexOf with a supplementary character.
      */
+    /**
+     * 1、处理（罕见）带有补充字符的lastIndexOf调用。
+     * @param ch    目标字符（Unicode代码点）
+     * @param fromIndex  开始搜索的下标
+     * @return
+     */
     private int lastIndexOfSupplementary(int ch, int fromIndex) {
+        //若字符合法
         if (Character.isValidCodePoint(ch)) {
+            //当前字符串的字符数组
             final char[] value = this.value;
+            //高位字符
             char hi = Character.highSurrogate(ch);
+            //低位字符
             char lo = Character.lowSurrogate(ch);
+            //最小遍历的下标
             int i = Math.min(fromIndex, value.length - 2);
+            //遍历比较相邻位是否存在同时等于高位字符和低位字符的情况，存在则返回相应的下标
             for (; i >= 0; i--) {
                 if (value[i] == hi && value[i + 1] == lo) {
                     return i;
                 }
             }
         }
+        //不合法字符或不存在字符串中，则返回-1
         return -1;
     }
 
@@ -2155,38 +2200,63 @@ public final class String
      * @param targetCount  count of the target string.
      * @param fromIndex    the index to begin searching from.
      */
+    /**
+     * 1、String和StringBuffer共享的代码以进行搜索。
+     *   源字符数组是被搜索的字符数组，而目标字符数组是要搜索的字符串。
+     *注意：目标字符数组就是要indexOf的入参字符串
+     * @param source       被搜索的字符数组
+     * @param sourceOffset  源字符串的偏移量。
+     * @param sourceCount   源字符串的数量。
+     * @param target       要搜索的目标字符数组。
+     * @param targetOffset  目标字符串的偏移量。
+     * @param targetCount  目标字符串的数量。
+     * @param fromIndex  开始搜索的下标。
+     * @return
+     */
     static int indexOf(char[] source, int sourceOffset, int sourceCount,
                        char[] target, int targetOffset, int targetCount,
                        int fromIndex) {
+        //开始搜索的下标大于源字符数组的数量的话
         if (fromIndex >= sourceCount) {
+            //a、目标字符串的数量为0时，则返回源字符串的数量。
+            //b、目标字符串的数量不为0时，则返回-1。
             return (targetCount == 0 ? sourceCount : -1);
         }
+        //开始搜索的下标小于0,则开始搜索的下标设置为0
         if (fromIndex < 0) {
             fromIndex = 0;
         }
+        //目标字符串的字符数组的数量为0，则返回开始搜索的下标
         if (targetCount == 0) {
             return fromIndex;
         }
-
+        //获取目标字符数组中，目标偏移下标的字符
         char first = target[targetOffset];
+        //找到需要遍历的最大位置，因为我们可能不需要一直遍历到最后
         int max = sourceOffset + (sourceCount - targetCount);
 
         for (int i = sourceOffset + fromIndex; i <= max; i++) {
             /* Look for first character. */
+            //找到第一个相等字符的位置，不相等就一直加，注意边界
             if (source[i] != first) {
                 while (++i <= max && source[i] != first) ;
             }
 
             /* Found first character, now look at the rest of v2 */
+            //再次判断下边界，如果大于边界就可以直接返回-1了
             if (i <= max) {
+                //j等于第一个相等字符的位置+1
                 int j = i + 1;
+                //结束为第一个相等字符的位置+目标字符数
                 int end = j + targetCount - 1;
+                //这个循环找到和目标字符串完全相等的长度
                 for (int k = targetOffset + 1; j < end && source[j]
                         == target[k]; j++, k++)
                     ;
-
+               //如果完全相等的长度和目标字符串长度相等，那么就认为找到了
                 if (j == end) {
                     /* Found whole string. */
+                    //返回当前下标减去源字符数组的偏移量
                     return i - sourceOffset;
                 }
             }
@@ -2328,7 +2398,18 @@ public final class String
      *                                   {@code beginIndex} is negative or larger than the
      *                                   length of this {@code String} object.
      */
+    /**
+     * 1、返回一个字符串，该字符串是该字符串的子字符串。
+     *   子字符串以指定下标处的字符开头，并延伸到该字符串的末尾。
+     *   示例："unhappy".substring(2) returns "happy"
+     *        "Harbison".substring(3) returns "bison"
+     *        "emptiness".substring(9) returns "" (an empty string)
+     * @param beginIndex  起始下标(包含)。
+     * @return 指定的子字符串。
+     * @throws IndexOutOfBoundsException : 如果beginIndex为负或大于此String对象的长度
+     */
     public String substring(int beginIndex) {
+        //如果beginIndex为负或大于此String对象的长度，则抛下标越界异常
         if (beginIndex < 0) {
             throw new StringIndexOutOfBoundsException(beginIndex);
         }
@@ -2336,6 +2417,8 @@ public final class String
         if (subLen < 0) {
             throw new StringIndexOutOfBoundsException(subLen);
         }
+        //1、若开始下标为0，则返回当前字符串
+        //2、若开始下标不为0，则调用String构造函数（入参为源字符串的字符数组，开始下标、子字符串的长度）
         return (beginIndex == 0) ? this : new String(value, beginIndex, subLen);
     }
 
@@ -2364,8 +2447,8 @@ public final class String
 
     /**
      * 1、返回一个字符串，该字符串是该字符串的子字符串。
-     * 子字符串从指定的{@code beginIndex}开始，并扩展到下标为{@code endIndex-1}处的字符。
-     * 因此，子字符串的长度为{@code endIndex-beginIndex}。
+     *  子字符串从指定的{@code beginIndex}开始，并扩展到下标为{@code endIndex-1}处的字符。
+     *  因此，子字符串的长度为{@code endIndex-beginIndex}。
      * 2、举例：
      * a、"hamburger".substring(4, 8) returns "urge"
      * b、"smiles".substring(1, 5) returns "mile"
@@ -2422,6 +2505,16 @@ public final class String
      * @spec JSR-51
      * @since 1.4
      */
+    /**
+     * 1、返回一个字符序列，该字符序列是该序列的子序列。
+     *    这种形式的方法的调用：str.subSequence(begin,end)
+     *    行为与调用完全相同。
+     *
+     * @param beginIndex  开始下标(包含)。
+     * @param endIndex    结束下标(不包含)。
+     * @return
+     * @throws IndexOutOfBoundsException
+     */
     public CharSequence subSequence(int beginIndex, int endIndex) {
         return this.substring(beginIndex, endIndex);
     }
@@ -2446,14 +2539,30 @@ public final class String
      * @return a string that represents the concatenation of this object's
      * characters followed by the string argument's characters.
      */
+    /**
+     * 1、将指定的字符串连接到该字符串的末尾。
+     * 2、如果参数字符串的长度为0，则返回此String对象。
+     *    否则，将返回一个String对象，该对象表示一个字符序列，该字符序列是此String对象表示的字符序列与参数字符串表示的字符序列的串联。
+     *    例子：
+     *      a、"cares".concat("s") returns "caress"
+     *      b、to".concat("get").concat("her") returns "together"
+     * @param str  连接到此String末尾的String。
+     * @return  一个字符串：表示此对象的字符跟字符串参数连接后的字符
+     */
     public String concat(String str) {
+        //获取入参字符串的长度
         int otherLen = str.length();
+        //入参字符串的长度为0，则返回当前字符串
         if (otherLen == 0) {
             return this;
         }
+        //获取当前字符串的字符数组的长度
         int len = value.length;
+        //将当前字符串拷贝一个新长度的字符数组中
         char buf[] = Arrays.copyOf(value, len + otherLen);
+        //从len开始，将str字符串中的字符复制到buf中
         str.getChars(buf, len);
+        //创建新的字符串对象
         return new String(buf, true);
     }
 
@@ -2488,13 +2597,13 @@ public final class String
      */
     /**
      * 1、返回一个字符串，该字符串是通过用newChar替换此字符串中所有出现的oldChar而产生的。
-     * 如果在此String对象表示的字符序列中未出现字符oldChar，则返回对该String对象的引用。
-     * 否则，返回一个String对象，该对象表示与该String对象表示的字符序列相同的字符序列，除了每个oldChar字符替换为newChar。
+     *   如果在此String对象表示的字符序列中未出现字符oldChar，则返回对该String对象的引用。
+     *   否则，返回一个String对象，该对象表示与该String对象表示的字符序列相同的字符序列，除了每个oldChar字符替换为newChar。
      * 2、举例
-     * a、"mesquite in your cellar".replace('e', 'o')  returns "mosquito in your collar"
-     * b、"the war of baronets".replace('r', 'y') returns "the way of bayonets"
-     * c、"sparring with a purple porpoise".replace('p', 't') returns "starring with a turtle tortoise"
-     * d、"JonL".replace('q', 'x')   returns "JonL" (no change)
+     *  a、"mesquite in your cellar".replace('e', 'o')  returns "mosquito in your collar"
+     *  b、"the war of baronets".replace('r', 'y') returns "the way of bayonets"
+     *  c、"sparring with a purple porpoise".replace('p', 't') returns "starring with a turtle tortoise"
+     *  d、"JonL".replace('q', 'x')   returns "JonL" (no change)
      *
      * @param oldChar 旧的字符
      * @param newChar 新的字符
@@ -2567,7 +2676,13 @@ public final class String
      * @return true if this string contains {@code s}, false otherwise
      * @since 1.5
      */
+    /**
+     * 1、当且仅当此字符串包含指定的char值时，才返回true。
+     * @param s  搜索的字符序列
+     * @return 如果此字符串包含s字符序列，则为true，否则为false
+     */
     public boolean contains(CharSequence s) {
+        //调用indexOf方法，返回是大于-1即可
         return indexOf(s.toString()) > -1;
     }
 
@@ -2623,6 +2738,7 @@ public final class String
      * @return 一个字符串
      */
     public String replaceFirst(String regex, String replacement) {
+        //用正则去实现
         return Pattern.compile(regex).matcher(this).replaceFirst(replacement);
     }
 
@@ -2678,6 +2794,7 @@ public final class String
      * @return 一个字符串
      */
     public String replaceAll(String regex, String replacement) {
+        //用正则去实现
         return Pattern.compile(regex).matcher(this).replaceAll(replacement);
     }
 
@@ -2694,7 +2811,7 @@ public final class String
      * @since 1.5
      */
     /**
-     * 1、用指定的文字替换序列替换该字符串中与文字目标序列匹配的每个子字符串。替换从字符串的开头到结尾进行。
+     * 1、用指定的字符序列替换该字符串中与目标字符序列匹配的每个子字符串。替换从字符串的开头到结尾进行。
      * 2、例如，在字符串“ aaa”中将“ aa”替换为“ b”将得到“ ba”而不是“ ab”。
      *
      * @param target      被替换的char值的序列
@@ -2794,13 +2911,14 @@ public final class String
      * @spec JSR-51
      */
     /**
+     * split方法用于切分字符串
+     *
      * 1、在给定的<a href="../util/regex/Pattern.html#sum">正则表达式</a>的匹配项周围拆分此字符串。
      * 2、此方法返回的数组包含此字符串的每个子字符串，该子字符串由与给定表达式匹配的另一个子字符串终止或由字符串的结尾终止。
-     * 数组中的子字符串按照它们在此字符串中出现的顺序排列。
-     * 如果表达式与输入的任何部分都不匹配，则结果数组只有一个元素，即此字符串。
+     *    数组中的子字符串按照它们在此字符串中出现的顺序排列。
+     *    如果表达式与输入的任何部分都不匹配，则结果数组只有一个元素，即此字符串。
      * 3、如果此字符串的开头存在正好匹配的字符串，则在结果数组的开头将包含一个空的前导子字符串。
-     * 开头的没有匹配上永远不会产生这样的空的子字符串。
-     * 4、
+     *    开头的没有匹配上永远不会产生这样的空的子字符串。
      *
      * @param regex 分隔的正则表达式
      * @param limit 拆分的个数上限
@@ -2819,6 +2937,7 @@ public final class String
            a、一个字符的字符串，并且此字符不是以下字符之一".$|()[{^?*+\\"
            b、两个字符的字符串，第一个字符是反斜杠"\"，第二个大小写字母或者数字。
          */
+        //判断能不能不用正则引擎,能不用的话，就直接切分
         if (((regex.value.length == 1 &&
                 ".$|()[{^?*+\\".indexOf(ch = regex.charAt(0)) == -1) ||
                 (regex.length() == 2 &&
@@ -2927,14 +3046,30 @@ public final class String
      * @see java.util.StringJoiner
      * @since 1.8
      */
+    /**
+     * 1、用某个分隔符将字符串数组连接起来
+     *
+     * 2、返回一个新的String，该字符串由CharSequence的副本与指定的delimiter的副本组成。
+     *   举例：
+     *    a、String message = String.join("-", "Java", "is", "cool");   message returned is: "Java-is-cool"
+     * 3、请注意，如果elements参数为null，则添加“ null”。
+     *
+     * @param delimiter  分隔每个元素的定界符（分隔符）
+     * @param elements   要连接在一起的元素
+     * @return 一个新的字符串，该字符串由elements和delimiter隔开
+     * @throws NullPointerException  如果delimiter或elements为null
+     */
     public static String join(CharSequence delimiter, CharSequence... elements) {
+        //校验delimiter、elements是否为null
         Objects.requireNonNull(delimiter);
         Objects.requireNonNull(elements);
         // Number of elements not likely worth Arrays.stream overhead.
+        //使用StringJoiner类拼接
         StringJoiner joiner = new StringJoiner(delimiter);
         for (CharSequence cs : elements) {
             joiner.add(cs);
         }
+        //转为字符串输出
         return joiner.toString();
     }
 
@@ -3034,6 +3169,12 @@ public final class String
      * @see java.lang.String#toUpperCase()
      * @see java.lang.String#toUpperCase(Locale)
      * @since 1.1
+     */
+    /**
+     * 1、当前方法用于转成小写。
+     * 2、
+     * @param locale
+     * @return
      */
     public String toLowerCase(Locale locale) {
         if (locale == null) {
@@ -3346,14 +3487,29 @@ public final class String
      * space removed, or this string if it has no leading or
      * trailing white space.
      */
+    /**
+     * 1、用于删除字符串的头尾空白符
+     * 2、返回值是此字符串的字符串，其中已删除所有头部和尾部空格。
+     * 3、如果此String对象表示一个空字符序列，或者此String对象表示的字符序列的第一个和最后一个字符的code码都大于'\ u005Cu0020'（空格字符） ，然后返回对此String对象的引用。
+     * 4、否则，如果字符串中不存在code码大于'\ u005Cu0020'的字符，则将返回表示空字符串的String对象。
+     * 5、否则，让k为字符串中第一个字符的下标的code大于'\ u005Cu0020'，让m为字符串的的最后一个下标的字符的code大于'\ u005Cu0020'。
+     *   返回一个String对象，该对象表示此字符串的子字符串，该子字符串以下标k处的字符开始，并以下标m处的字符结束，即，this.substring(k，m + 1)的结果。
+     * 6、此方法可用于从字符串的开头和结尾修剪空格（如上定义）。
+     * @return 一个值为字符串的字符串，其中删除了任何头部和尾部空格，如果此字符串没有头部或尾部空格，则为该字符串。
+     */
     public String trim() {
+        //新字符串长度
         int len = value.length;
+        //新字符串开始的下标（在原字符串中的下标）
         int st = 0;
+        //字符串的字符数组
         char[] val = value;    /* avoid getfield opcode */
 
+        //从头开始遍历，去除字符串头部的空格
         while ((st < len) && (val[st] <= ' ')) {
             st++;
         }
+        //从尾开始遍历，去除字符串尾部的空格
         while ((st < len) && (val[len - 1] <= ' ')) {
             len--;
         }
@@ -3365,7 +3521,12 @@ public final class String
      *
      * @return the string itself.
      */
+    /**
+     * 该对象（已经是一个字符串！）本身会返回。
+     * @return 字符串本身
+     */
     public String toString() {
+        //直接返回 this
         return this;
     }
 
@@ -3376,9 +3537,17 @@ public final class String
      * of this string and whose contents are initialized to contain
      * the character sequence represented by this string.
      */
+    /**
+     * 1、将字符串转成 char 数组
+     * 2、将此字符串转换为新的字符数组。
+     * @return 返回一个新分配的字符数组，其长度是此字符串的长度，并且其内容已初始化为包含此字符串表示的字符序列。
+     */
     public char[] toCharArray() {
         // Cannot use Arrays.copyOf because of class initialization order issues
+        //由于类初始化顺序问题，无法使用Arrays.copyOf
+        //创建当前字符串长度的字符数组
         char result[] = new char[value.length];
+        //从当前字符串的字符数组中拷贝数据到新的字符数据(result)中
         System.arraycopy(value, 0, result, 0, value.length);
         return result;
     }
@@ -3411,6 +3580,12 @@ public final class String
      * @see java.util.Formatter
      * @since 1.5
      */
+    /**
+     * 1、格式化字符串，通过 Formatter 来实现
+     * @param format
+     * @param args
+     * @return
+     */
     public static String format(String format, Object... args) {
         return new Formatter().format(format, args).toString();
     }
@@ -3442,6 +3617,13 @@ public final class String
      *                                          formatter class specification
      * @see java.util.Formatter
      * @since 1.5
+     */
+    /**
+     * 1、使用指定的语言环境，格式字符串和参数返回格式化的字符串。
+     * @param l   java.util.Locale locale}在格式化期间要应用。 如果l为null，则不应用任何本地化。
+     * @param format  一个格式化字符串
+     * @param args
+     * @return  一个格式化字符串
      */
     public static String format(Locale l, String format, Object... args) {
         return new Formatter(l).format(format, args).toString();
@@ -3511,6 +3693,14 @@ public final class String
      *                                   {@code offset+count} is larger than
      *                                   {@code data.length}.
      */
+    /**
+     * 1、等效于#valueOf（char []，int，int）。
+     * @param data   字符数组
+     * @param offset  子数组的初始偏移量。
+     * @param count   子数组的长度
+     * @return  一个String，其中包含字符数组的指定子数组的字符。
+     *  @throws IndexOutOfBoundsException  如果offset是负数或者count是负数或者offset+count>data.length
+     */
     public static String copyValueOf(char data[], int offset, int count) {
         return new String(data, offset, count);
     }
@@ -3546,6 +3736,11 @@ public final class String
      * @return a string of length {@code 1} containing
      * as its single character the argument {@code c}.
      */
+    /**
+     * 1、返回char参数的字符串表示形式。
+     * @param c 一个字符
+     * @return  长度为1的字符串，其中包含参数c作为其单个字符。
+     */
     public static String valueOf(char c) {
         char data[] = {c};
         return new String(data, true);
@@ -3559,6 +3754,13 @@ public final class String
      *
      * @param i an {@code int}.
      * @return a string representation of the {@code int} argument.
+     * @see java.lang.Integer#toString(int, int)
+     */
+    /**
+     * 1、返回int参数的字符串表示形式。
+     * 2、该表示形式正是一个参数的Integer.toString方法返回的表示形式。
+     * @param i  一个int类型的值
+     * @return  int参数的字符串表示形式。
      * @see java.lang.Integer#toString(int, int)
      */
     public static String valueOf(int i) {
@@ -3575,6 +3777,13 @@ public final class String
      * @return a string representation of the {@code long} argument.
      * @see java.lang.Long#toString(long)
      */
+    /**
+     * 1、返回long参数的字符串表示形式。
+     * 2、该表示形式正是一个参数的Long.toString方法返回的表示形式。
+     * @param i  一个long类型的值
+     * @return  long参数的字符串表示形式。
+     * @see java.lang.Long#toString(long)
+     */
     public static String valueOf(long l) {
         return Long.toString(l);
     }
@@ -3589,6 +3798,13 @@ public final class String
      * @return a string representation of the {@code float} argument.
      * @see java.lang.Float#toString(float)
      */
+    /**
+     * 1、返回float参数的字符串表示形式。
+     * 2、该表示形式正是一个参数的Float.toString方法返回的表示形式。
+     * @param i  一个float类型的值
+     * @return  float参数的字符串表示形式。
+     * @see java.lang.Float#toString(float)
+     */
     public static String valueOf(float f) {
         return Float.toString(f);
     }
@@ -3601,6 +3817,13 @@ public final class String
      *
      * @param d a {@code double}.
      * @return a  string representation of the {@code double} argument.
+     * @see java.lang.Double#toString(double)
+     */
+    /**
+     * 1、返回double参数的字符串表示形式。
+     * 2、该表示形式正是一个参数的Double.toString方法返回的表示形式。
+     * @param i  一个double类型的值
+     * @return  double参数的字符串表示形式。
      * @see java.lang.Double#toString(double)
      */
     public static String valueOf(double d) {
@@ -3629,6 +3852,15 @@ public final class String
      *
      * @return a string that has the same contents as this string, but is
      * guaranteed to be from a pool of unique strings.
+     */
+    /**
+     * 1、一个 native 方法
+     * 2、返回字符串对象的规范表示。
+     * 3、最初为空的字符串池由String类私有维护。
+     *   a、调用intern方法时，如果池中已经包含一个与此String对象相等的字符串(通过#equals(Object))，则返回池中的字符串。
+     *   b、否则，将此String对象添加到池中，并返回对该String对象的引用。
+     * 4、因此，对于任意两个字符串s和t，当且仅当s.equals(t)是true时，s.intern()== t.intern()为true。
+     * @return 与该字符串具有相同内容的字符串，但保证来自唯一字符串池。
      */
     public native String intern();
 }
