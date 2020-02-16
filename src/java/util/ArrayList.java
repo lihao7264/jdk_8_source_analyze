@@ -104,6 +104,43 @@ import sun.misc.SharedSecrets;
  * @since   1.2
  */
 
+/**
+ *  1、当前类是List接口的可调整大小的数组实现。
+ *    实现所有可选的列表操作，并允许所有元素，包括null。
+ *    除了实现List接口之外，此类还提供一些方法来操纵数组的大小用于链表的内部存储。（此类与Vector大致等效，但它是不同步的。）
+ *  2、size、isEmpty、get、set、iterator和listIterator操作的时间复杂度都是 O (1)。
+ *     add操作的时间复杂度也是 O (1)，也就是说，添加n个元素需要O（n）时间。
+ *     所有其他操作均以线性时间运行（大致而言）。 与LinkedList实现的常量因子相比，ArrayList的常量因子较低。
+ *  3、每个ArrayList实例都有一个容量。
+ *    容量是用于在链表中存储元素的数组的大小。
+ *    它总是至少与链表大小一样大。
+ *    随着元素添加到ArrayList中，其容量会自动增长。
+ *    除了添加元素具有固定的摊销时间成本外，没有指定增长策略的细节。
+ *  4、在添加大量元素之前，使用ensureCapacity操作，应用程序可以增加ArrayList实例的容量。
+ *     这可以减少增量重新分配的数量。
+ *  5、注意：请注意，此实现是不同步的。
+ *       a、如果多个线程同时访问ArrayList实例，并且至少有一个线程在结构上修改了链表，则必须外部同步。
+ *       （结构修改是添加或删除一个或多个元素，或显式调整数组的大小的任何操作；仅设置元素的值不是结构修改。）
+ *         解决方法：通常通过在自然封装链表的某个对象上进行同步来完成此操作。。
+ *  6、如果不存在这样的对象，则应使用{@link Collections＃synchronizedList Collections.synchronizedList}方法"包装"链表。
+ *     最好在创建时完成此操作，以防止意外地不同步访问链表：链表= = Collections.synchronizedList（new ArrayList（...））;
+ *  7、此类的{@link #iterator() iterator}和{@link #listIterator(int) listIterator}方法返回的迭代器是fail-fast(快速失败机制)：
+ *     a、（如果链表在结构上进行了修改） 创建迭代器之后的任何时间，通过迭代器自己的{@link ListIterator＃remove（）remove}或{@link ListIterator＃add（Object）add}方法之外的任何方式，迭代器都会抛出{@link ConcurrentModificationException} 。
+ *        因此，面对并发修改，迭代器会快速干净地失败，而不会在未来的不确定时间内冒任意不确定的行为的风险。
+ *  8、注意：迭代器的快速失败行为无法得到保证，因为通常来说，在存在不同步的并发修改的情况下，不可能做出任何严格的保证。
+ *     快速失败的迭代器会尽最大努力抛出ConcurrentModificationException。
+ *     因此，编写依赖于此异常的程序以确保其正确性是错误的：迭代器的快速失败行为应仅用于检测错误。
+ * 总结：
+ *   a、允许 put null 值，会自动扩容。
+ *   b、size、isEmpty、get、set、add 等方法时间复杂度都是 O (1)。
+ *   c、是非线程安全的，多线程情况下，推荐使用线程安全类：Collections#synchronizedList。
+ *   d、增强 for 循环，或者使用迭代器迭代过程中，如果数组大小被改变，会快速失败，抛出异常。
+ *  @see     Collection
+ *  @see     List
+ *  @see     LinkedList
+ *  @see     Vector
+ * @param <E>
+ */
 public class ArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
@@ -112,10 +149,17 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * Default initial capacity.
      */
+    /**
+     * 默认初始容量：10
+     * 也就是数组的初始大小
+     */
     private static final int DEFAULT_CAPACITY = 10;
 
     /**
      * Shared empty array instance used for empty instances.
+     */
+    /**
+     * 用于空实例的共享空数组实例。
      */
     private static final Object[] EMPTY_ELEMENTDATA = {};
 
@@ -123,6 +167,10 @@ public class ArrayList<E> extends AbstractList<E>
      * Shared empty array instance used for default sized empty instances. We
      * distinguish this from EMPTY_ELEMENTDATA to know how much to inflate when
      * first element is added.
+     */
+    /**
+     * 共享的空数组实例，用于默认大小的空实例。
+     * 我们将此与EMPTY_ELEMENTDATA区别开来，以了解添加第一个元素时需要充多少。
      */
     private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
 
@@ -132,12 +180,21 @@ public class ArrayList<E> extends AbstractList<E>
      * empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA
      * will be expanded to DEFAULT_CAPACITY when the first element is added.
      */
-    transient Object[] elementData; // non-private to simplify nested class access
+    /**
+     * 注意：用transient关键字标记的成员变量不参与序列化
+     * 1、存储ArrayList元素的数组缓冲区。（也就是存储ArrayList的数据的数组）
+     * 2、ArrayList的容量是该数组缓冲区的长度。
+     * 3、添加第一个元素时，任何具有elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA的空ArrayList都将扩展为DEFAULT_CAPACITY。
+     */
+    transient Object[] elementData; // non-private to simplify nested class access  非私有以简化嵌套类访问
 
     /**
      * The size of the ArrayList (the number of elements it contains).
      *
      * @serial
+     */
+    /**
+     * ArrayList的大小（它包含的元素数）
      */
     private int size;
 
@@ -148,12 +205,20 @@ public class ArrayList<E> extends AbstractList<E>
      * @throws IllegalArgumentException if the specified initial capacity
      *         is negative
      */
+    /**
+     * 1、指定容量初始化
+     * @param initialCapacity  链表的初始容量
+     * @throws IllegalArgumentException，如果指定的初始容量为负
+     */
     public ArrayList(int initialCapacity) {
+        //初始容量大于0，则设置该初始大小的数组
         if (initialCapacity > 0) {
             this.elementData = new Object[initialCapacity];
         } else if (initialCapacity == 0) {
+            //若初始容量为0，则初始化为空数组
             this.elementData = EMPTY_ELEMENTDATA;
         } else {
+            //初始容量为负数，则抛出异常
             throw new IllegalArgumentException("Illegal Capacity: "+
                                                initialCapacity);
         }
@@ -161,6 +226,9 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      * Constructs an empty list with an initial capacity of ten.
+     */
+    /**
+     * 无参数直接初始化，数组大小为空
      */
     public ArrayList() {
         this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
@@ -174,14 +242,22 @@ public class ArrayList<E> extends AbstractList<E>
      * @param c the collection whose elements are to be placed into this list
      * @throws NullPointerException if the specified collection is null
      */
+    /**
+     * 指定初始数据初始化
+     * @param c  将其元素放入此链表的集合
+     */
     public ArrayList(Collection<? extends E> c) {
+        //elementData是保存数组的容器，默认为 null
         elementData = c.toArray();
+        //如果给定的集合（c）数据有值
         if ((size = elementData.length) != 0) {
             // c.toArray might (incorrectly) not return Object[] (see 6260652)
+            ///如果集合元素类型不是 Object 类型，我们会转成 Object
             if (elementData.getClass() != Object[].class)
                 elementData = Arrays.copyOf(elementData, size, Object[].class);
         } else {
             // replace with empty array.
+            //给定集合（c）无值，则默认空数组
             this.elementData = EMPTY_ELEMENTDATA;
         }
     }
@@ -617,6 +693,35 @@ public class ArrayList<E> extends AbstractList<E>
         size += numNew;
         return numNew != 0;
     }
+
+    /**
+     * The number of times this list has been <i>structurally modified</i>.
+     * Structural modifications are those that change the size of the
+     * list, or otherwise perturb it in such a fashion that iterations in
+     * progress may yield incorrect results.
+     *
+     * <p>This field is used by the iterator and list iterator implementation
+     * returned by the {@code iterator} and {@code listIterator} methods.
+     * If the value of this field changes unexpectedly, the iterator (or list
+     * iterator) will throw a {@code ConcurrentModificationException} in
+     * response to the {@code next}, {@code remove}, {@code previous},
+     * {@code set} or {@code add} operations.  This provides
+     * <i>fail-fast</i> behavior, rather than non-deterministic behavior in
+     * the face of concurrent modification during iteration.
+     *
+     * <p><b>Use of this field by subclasses is optional.</b> If a subclass
+     * wishes to provide fail-fast iterators (and list iterators), then it
+     * merely has to increment this field in its {@code add(int, E)} and
+     * {@code remove(int)} methods (and any other methods that it overrides
+     * that result in structural modifications to the list).  A single call to
+     * {@code add(int, E)} or {@code remove(int)} must add no more than
+     * one to this field, or the iterators (and list iterators) will throw
+     * bogus {@code ConcurrentModificationExceptions}.  If an implementation
+     * does not wish to provide fail-fast iterators, this field may be
+     * ignored.
+     * 在迭代器中有用
+     */
+    protected transient int modCount = 0;
 
     /**
      * Removes from this list all of the elements whose index is between
