@@ -122,14 +122,24 @@ public class LinkedList<E>
     /**
      * Links e as first element.
      */
+    /**
+     * 从头部追加
+     * @param e
+     */
     private void linkFirst(E e) {
+        // 头节点赋值给临时变量
         final Node<E> f = first;
+        // 新建节点，前一个节点指向null，e 是新建节点，f 是新建节点的下一个节点，目前值是头节点的值
         final Node<E> newNode = new Node<>(null, e, f);
+        // 新建节点成为头节点
         first = newNode;
+        // 头节点为空，就是链表为空，头尾节点是一个节点
         if (f == null)
             last = newNode;
+        // 上一个头节点的前一个节点指向当前节点
         else
             f.prev = newNode;
+        // 大小和版本更改
         size++;
         modCount++;
     }
@@ -137,14 +147,26 @@ public class LinkedList<E>
     /**
      * Links e as last element.
      */
+    /**
+     * 从尾部开始追加节点
+     * @param e
+     */
     void linkLast(E e) {
+        // 把尾节点数据暂存
         final Node<E> l = last;
+        // 新建新的节点，初始化入参含义：
+        // l 是新节点的前一个节点，当前值是尾节点值
+        // e 表示当前新增节点，当前新增节点后一个节点是 null
         final Node<E> newNode = new Node<>(l, e, null);
+        // 新建节点追加到尾部
         last = newNode;
+        // 如果链表为空（l 是尾节点，尾节点为空，链表即空），头部和尾部是同一个节点，都是新建的节点
         if (l == null)
             first = newNode;
+        // 否则把前尾节点的下一个节点，指向当前尾节点。
         else
             l.next = newNode;
+        // 大小和版本更改
         size++;
         modCount++;
     }
@@ -168,17 +190,29 @@ public class LinkedList<E>
     /**
      * Unlinks non-null first node f.
      */
+    /**
+     * 从头删除节点 f 是链表头节点
+     * @param f 要删除的节点
+     * @return
+     */
     private E unlinkFirst(Node<E> f) {
         // assert f == first && f != null;
+        // 拿出头节点的值，作为方法的返回值
         final E element = f.item;
+        // 拿出头节点的下一个节点
         final Node<E> next = f.next;
+        // 帮助 GC 回收头节点
         f.item = null;
         f.next = null; // help GC
+        // 头节点的下一个节点成为头节点
         first = next;
+        // 如果next为空，表明链表为空
         if (next == null)
             last = null;
+        //链表不为空，头节点的前一个节点指向 null
         else
             next.prev = null;
+        // 修改链表大小和版本
         size--;
         modCount++;
         return element;
@@ -968,10 +1002,15 @@ public class LinkedList<E>
     }
 
     private static class Node<E> {
+        // 节点值
         E item;
+        // 指向的下一个节点
         Node<E> next;
+
+        // 指向的前一个节点
         Node<E> prev;
 
+        // 初始化参数顺序分别是：前一个节点、本身节点值、后一个节点
         Node(Node<E> prev, E element, Node<E> next) {
             this.item = element;
             this.next = next;
