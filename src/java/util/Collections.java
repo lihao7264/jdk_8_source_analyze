@@ -2023,7 +2023,9 @@ public class Collections {
     static class SynchronizedCollection<E> implements Collection<E>, Serializable {
         private static final long serialVersionUID = 3053995032091335093L;
 
+        //支持集合
         final Collection<E> c;  // Backing Collection
+        //要同步的对象 --- 也就是加锁的对象
         final Object mutex;     // Object on which to synchronize
 
         SynchronizedCollection(Collection<E> c) {
@@ -2057,6 +2059,7 @@ public class Collections {
         }
 
         public boolean add(E e) {
+            // synchronized 是一种轻量锁，mutex 表示一个当前 SynchronizedList
             synchronized (mutex) {return c.add(e);}
         }
         public boolean remove(Object o) {
@@ -2450,6 +2453,7 @@ public class Collections {
             synchronized (mutex) {return list.set(index, element);}
         }
         public void add(int index, E element) {
+            // synchronized 是一种轻量锁，mutex 表示一个当前 SynchronizedList
             synchronized (mutex) {list.add(index, element);}
         }
         public E remove(int index) {

@@ -3350,10 +3350,24 @@ public class Arrays {
      * @throws NullPointerException if <tt>original</tt> is null
      * @since 1.6
      */
+    /**
+     * 1、复制指定的数组，使用空字符截断或填充（如有必要），因此副本具有指定的长度。
+     *    对于在原始数组和副本中均有效的所有索引，两个数组将包含相同的值。
+     *    对于副本中有效但原始索引无效的任何索引，副本将包含'\\ u000'。
+     *    当且仅当指定长度大于原始数组的长度时，此类索引才会存在。
+     * @param original  要复制的数组
+     * @param newLength  要返回的副本的长度
+     * @return 原始数组的副本，被截断或用空字符填充以获得指定的长度
+     * @throws NegativeArraySizeException 如果newLength为负
+     * @throws NullPointerException 如果original是空的
+     */
     public static char[] copyOf(char[] original, int newLength) {
+        //新长度的数组
         char[] copy = new char[newLength];
+        //将原数组中的元素拷贝到新数组中
         System.arraycopy(original, 0, copy, 0,
                          Math.min(original.length, newLength));
+        //返回新数组
         return copy;
     }
 
