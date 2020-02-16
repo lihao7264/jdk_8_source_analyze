@@ -597,16 +597,23 @@ public class LinkedList<E>
     /**
      * Returns the (non-null) Node at the specified element index.
      */
+    /**
+     * 根据链表索引位置查询节点
+     * @param index  索引位置
+     * @return
+     */
     Node<E> node(int index) {
         // assert isElementIndex(index);
-
+        // 如果 index 处于队列的前半部分，从头开始找，size >> 1 是 size 除以 2 的意思。
         if (index < (size >> 1)) {
             Node<E> x = first;
+            // 直到 for 循环到 index 的前一个 node 停止
             for (int i = 0; i < index; i++)
                 x = x.next;
             return x;
         } else {
             Node<E> x = last;
+            // 如果 index 处于队列的后半部分，从尾开始找
             for (int i = size - 1; i > index; i--)
                 x = x.prev;
             return x;
@@ -902,10 +909,15 @@ public class LinkedList<E>
         return new ListItr(index);
     }
 
+    // 双向迭代器类
     private class ListItr implements ListIterator<E> {
+        //上一次执行 next() 或者 previos() 方法时的节点位置
         private Node<E> lastReturned;
+        //下一个节点
         private Node<E> next;
+        //下一个节点的位置
         private int nextIndex;
+        //expectedModCount：期望版本号；modCount：目前最新版本号
         private int expectedModCount = modCount;
 
         ListItr(int index) {
@@ -914,31 +926,56 @@ public class LinkedList<E>
             nextIndex = index;
         }
 
+        /**
+         * 判断还有没有下一个元素
+         */
         public boolean hasNext() {
+            // 下一个节点的索引小于链表的大小，就有
             return nextIndex < size;
         }
 
+        /**
+         * 取下一个元素
+         * @return
+         */
         public E next() {
+            //检查期望版本号有无发生变化
             checkForComodification();
+            //再次检查
             if (!hasNext())
                 throw new NoSuchElementException();
-
+            // next 是当前节点，在上一次执行 next()方法时被赋值的。
+            // 第一次执行时，是在初始化迭代器的时候，next 被赋值的
             lastReturned = next;
+            // next 是下一个节点了，为下次迭代做准备
             next = next.next;
+            // 索引位置变化
             nextIndex++;
             return lastReturned.item;
         }
 
+        /**
+         * 如果上次节点索引位置大于 0，就还有节点可以迭代
+         * @return
+         */
         public boolean hasPrevious() {
             return nextIndex > 0;
         }
 
+        /**
+         *  取前一个节点
+         * @return
+         */
         public E previous() {
+            //检查期望版本号有无发生变化
             checkForComodification();
+            //再次检查
             if (!hasPrevious())
                 throw new NoSuchElementException();
-
+            // next 为空场景：1:说明是第一次迭代，取尾节点(last);2:上一次操作把尾节点删除掉了
+            // next 不为空场景：说明已经发生过迭代了，直接取前一个节点即可(next.prev)
             lastReturned = next = (next == null) ? last : next.prev;
+            // 索引位置变化
             nextIndex--;
             return lastReturned.item;
         }
@@ -951,18 +988,30 @@ public class LinkedList<E>
             return nextIndex - 1;
         }
 
+        /**
+         * 删除元素
+         */
         public void remove() {
+            //检查期望版本号有无发生变化
             checkForComodification();
+            // lastReturned 是本次迭代需要删除的值，分以下空和非空两种情况：
+            // lastReturned 为空，说明调用者没有主动执行过 next() 或者 previos()，直接报错
+            // lastReturned 不为空，是在上次执行 next() 或者 previos()方法时赋的值
             if (lastReturned == null)
                 throw new IllegalStateException();
 
             Node<E> lastNext = lastReturned.next;
+            //删除当前节点
             unlink(lastReturned);
+            // next == lastReturned 的场景分析：从尾到头递归顺序，并且是第一次迭代，并且要删除最后一个元素的情况下
+            // 这种情况下，previous() 方法里面设置了 lastReturned = next = last,所以 next 和 lastReturned会相等
             if (next == lastReturned)
+                // 这时候 lastReturned 是尾节点，lastNext 是 null，所以 next 也是 null，这样在 previous() 执行时，发现 next 是 null，就会把尾节点赋值给 next
                 next = lastNext;
             else
                 nextIndex--;
             lastReturned = null;
+            //期望版本+1
             expectedModCount++;
         }
 
