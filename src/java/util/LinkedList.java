@@ -922,6 +922,7 @@ public class LinkedList<E>
 
         ListItr(int index) {
             // assert isPositionIndex(index);
+            // 如果下一个节点的位置为链表的长度，则下一个节点为null，否则调用链表的node方法查找index位置对应的节点
             next = (index == size) ? null : node(index);
             nextIndex = index;
         }
@@ -946,6 +947,7 @@ public class LinkedList<E>
                 throw new NoSuchElementException();
             // next 是当前节点，在上一次执行 next()方法时被赋值的。
             // 第一次执行时，是在初始化迭代器的时候，next 被赋值的
+            // lastReturned:上一次执行 next() 或者 previos() 方法时的节点位置
             lastReturned = next;
             // next 是下一个节点了，为下次迭代做准备
             next = next.next;
@@ -974,8 +976,9 @@ public class LinkedList<E>
                 throw new NoSuchElementException();
             // next 为空场景：1:说明是第一次迭代，取尾节点(last);2:上一次操作把尾节点删除掉了
             // next 不为空场景：说明已经发生过迭代了，直接取前一个节点即可(next.prev)
+            // lastReturned:上一次执行 next() 或者 previos() 方法时的节点位置
             lastReturned = next = (next == null) ? last : next.prev;
-            // 索引位置变化
+            // 索引位置变化,向前
             nextIndex--;
             return lastReturned.item;
         }
