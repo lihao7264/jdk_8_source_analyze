@@ -110,6 +110,11 @@ public final class Objects {
      * a {@code null} argument
      * @see Object#hashCode
      */
+    /**
+     * 非null参数，返回对应的哈希码，参数为null，则返回的0。
+     * @param o  一个对象
+     * @return  非null参数的哈希码和null参数的哈希码为0
+     */
     public static int hashCode(Object o) {
         return o != null ? o.hashCode() : 0;
     }
