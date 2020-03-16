@@ -512,6 +512,7 @@ public class HashMap<K,V> extends AbstractMap<K,V>
      */
     final float loadFactor;
 
+
     /* ---------------- Public operations -------------- */
 
     /**
