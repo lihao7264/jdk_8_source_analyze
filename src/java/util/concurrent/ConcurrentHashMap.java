@@ -931,17 +931,35 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @throws NullPointerException if the specified key is null
      */
+    /**
+     * get的整个过程：
+     * A、计算 Hash 值，并由此值找到对应的槽点。
+     * B、如果数组是空的或者该位置为 null，那么直接返回 null 就可以了。
+     * C、如果该位置处的节点刚好就是我们需要的，直接返回该节点的值。
+     * D、如果该位置节点是红黑树或者正在扩容，就用 find 方法继续查找。
+     * E、否则那就是链表，就进行遍历链表查找。
+     * @param key
+     * @return
+     */
     public V get(Object key) {
         Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
+        //计算 hash 值
         int h = spread(key.hashCode());
+        //如果整个数组是空的，或者当前槽点的数据是空的，说明 key 对应的 value 不存在，直接返回 null
         if ((tab = table) != null && (n = tab.length) > 0 &&
             (e = tabAt(tab, (n - 1) & h)) != null) {
+
+            //判断头结点是否就是我们需要的节点，如果是则直接返回
             if ((eh = e.hash) == h) {
                 if ((ek = e.key) == key || (ek != null && key.equals(ek)))
                     return e.val;
             }
+
+            //如果头结点 hash 值小于 0，说明是红黑树或者正在扩容，就用对应的 find 方法来查找
             else if (eh < 0)
                 return (p = e.find(h, key)) != null ? p.val : null;
+
+            //遍历链表来查找
             while ((e = e.next) != null) {
                 if (e.hash == h &&
                     ((ek = e.key) == key || (ek != null && key.equals(ek))))
@@ -1007,29 +1025,42 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 
     /** Implementation for put and putIfAbsent */
+    /** 该方法会逐步根据当前槽点是未初始化、空、扩容、链表、红黑树等不同情况做出不同的处理。*/
     final V putVal(K key, V value, boolean onlyIfAbsent) {
         if (key == null || value == null) throw new NullPointerException();
+        //计算 hash 值
         int hash = spread(key.hashCode());
         int binCount = 0;
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
+            //如果数组是空的，就进行初始化
             if (tab == null || (n = tab.length) == 0)
                 tab = initTable();
+
+            //找该 hash 值对应的数组下标
             else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+                //如果该位置是空的，就用 CAS 的方式放入新值
                 if (casTabAt(tab, i, null,
                              new Node<K,V>(hash, key, value, null)))
                     break;                   // no lock when adding to empty bin
             }
+            //hash值等于 MOVED 代表在扩容
             else if ((fh = f.hash) == MOVED)
                 tab = helpTransfer(tab, f);
+
+            //槽点上是有值的情况
             else {
                 V oldVal = null;
+                //用 synchronized 锁住当前槽点，保证并发安全
                 synchronized (f) {
                     if (tabAt(tab, i) == f) {
+                        //如果是链表的形式
                         if (fh >= 0) {
                             binCount = 1;
+                            //遍历链表
                             for (Node<K,V> e = f;; ++binCount) {
                                 K ek;
+                                //如果发现该 key 已存在，就判断是否需要进行覆盖，然后返回
                                 if (e.hash == hash &&
                                     ((ek = e.key) == key ||
                                      (ek != null && key.equals(ek)))) {
@@ -1039,6 +1070,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                     break;
                                 }
                                 Node<K,V> pred = e;
+                                //到了链表的尾部也没有发现该 key，说明之前不存在，就把新值添加到链表的最后
                                 if ((e = e.next) == null) {
                                     pred.next = new Node<K,V>(hash, key,
                                                               value, null);
@@ -1046,9 +1078,13 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                 }
                             }
                         }
+
+                        //如果是红黑树的形式
                         else if (f instanceof TreeBin) {
                             Node<K,V> p;
                             binCount = 2;
+
+                            //调用 putTreeVal 方法往红黑树里增加数据
                             if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
                                                            value)) != null) {
                                 oldVal = p.val;
@@ -1059,8 +1095,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     }
                 }
                 if (binCount != 0) {
+                    //检查是否满足条件并把链表转换为红黑树的形式，默认的 TREEIFY_THRESHOLD 阈值是 8
                     if (binCount >= TREEIFY_THRESHOLD)
                         treeifyBin(tab, i);
+
+                    //putVal 的返回是添加前的旧值，所以返回 oldVal
                     if (oldVal != null)
                         return oldVal;
                     break;
