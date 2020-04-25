@@ -94,14 +94,20 @@ public class CopyOnWriteArrayList<E>
     private static final long serialVersionUID = 8673264195747942595L;
 
     /** The lock protecting all mutators */
+    /**可重入锁对象*/
     final transient ReentrantLock lock = new ReentrantLock();
 
     /** The array, accessed only via getArray/setArray. */
+    /**CopyOnWriteArrayList底层由数组实现，volatile修饰，保证数组的可见性*/
     private transient volatile Object[] array;
 
     /**
      * Gets the array.  Non-private so as to also be accessible
      * from CopyOnWriteArraySet class.
+     */
+    /**
+     * 得到数组
+     * @return
      */
     final Object[] getArray() {
         return array;
@@ -110,12 +116,19 @@ public class CopyOnWriteArrayList<E>
     /**
      * Sets the array.
      */
+    /**
+     * 设置数组
+     * @param a
+     */
     final void setArray(Object[] a) {
         array = a;
     }
 
     /**
      * Creates an empty list.
+     */
+    /**
+     * 初始化CopyOnWriteArrayList相当于初始化一个空的数组
      */
     public CopyOnWriteArrayList() {
         setArray(new Object[0]);
@@ -432,16 +445,23 @@ public class CopyOnWriteArrayList<E>
      * @return {@code true} (as specified by {@link Collection#add})
      */
     public boolean add(E e) {
+        //加锁
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
+            // 得到原数组的长度和元素
             Object[] elements = getArray();
             int len = elements.length;
+
+            // 复制出一个新数组
             Object[] newElements = Arrays.copyOf(elements, len + 1);
             newElements[len] = e;
+
+            // 将volatile Object[] array 的指向替换成新数组
             setArray(newElements);
             return true;
         } finally {
+            //解锁
             lock.unlock();
         }
     }
@@ -1130,8 +1150,10 @@ public class CopyOnWriteArrayList<E>
 
     static final class COWIterator<E> implements ListIterator<E> {
         /** Snapshot of the array */
+        /** 数组的快照，也就是创建迭代器那个时刻的数组情况 */
         private final Object[] snapshot;
         /** Index of element to be returned by subsequent call to next.  */
+        /** 迭代器的游标 */
         private int cursor;
 
         private COWIterator(Object[] elements, int initialCursor) {

@@ -935,7 +935,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * get的整个过程：
      * A、计算 Hash 值，并由此值找到对应的槽点。
      * B、如果数组是空的或者该位置为 null，那么直接返回 null 就可以了。
-     * C、如果该位置处的节点刚好就是我们需要的，直接返回该节点的值。
+     * C、如果该位置处C的节点刚好就是我们需要的，直接返回该节点的值。
      * D、如果该位置节点是红黑树或者正在扩容，就用 find 方法继续查找。
      * E、否则那就是链表，就进行遍历链表查找。
      * @param key
