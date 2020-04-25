@@ -198,6 +198,8 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
         }
 
         boolean casNext(Node<E> cmp, Node<E> val) {
+            // 运用了 UNSAFE.compareAndSwapObject 方法来完成 CAS 操作
+            // 该方法利用 CPU 的 CAS 指令保证其不可中断。（lock cmpxhg 命令实现的，cmpxhg是非原子性的命令，lock就是为了保证cmpxhg的原子性）
             return UNSAFE.compareAndSwapObject(this, nextOffset, cmp, val);
         }
 
@@ -324,13 +326,17 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException if the specified element is null
      */
     public boolean offer(E e) {
+        //检查插入的元素是不是 null
         checkNotNull(e);
         final Node<E> newNode = new Node<E>(e);
 
+        //死循环
+        //这个死循环去配合 CAS 也就是典型的乐观锁的思想。
         for (Node<E> t = tail, p = t;;) {
             Node<E> q = p.next;
             if (q == null) {
                 // p is last node
+                //利用了 CAS 来操作的
                 if (p.casNext(null, newNode)) {
                     // Successful CAS is the linearization point
                     // for e to become an element of this queue,

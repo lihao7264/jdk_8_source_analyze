@@ -91,15 +91,19 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     private static final long serialVersionUID = -817911632652898426L;
 
     /** The queued items */
+    /** 用于存放元素的数组 */
     final Object[] items;
 
     /** items index for next take, poll, peek or remove */
+    /** 下一次读取操作的位置 */
     int takeIndex;
 
     /** items index for next put, offer, or add */
+    /** 下一次写入操作的位置 */
     int putIndex;
 
     /** Number of elements in the queue */
+    /** 队列中的元素数量 */
     int count;
 
     /*
@@ -108,12 +112,15 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      */
 
     /** Main lock guarding all access */
+    /** 可重入锁 */
     final ReentrantLock lock;
 
     /** Condition for waiting takes */
+    /** 进行读操作时如果队列为空，线程会被保存这里等待 */
     private final Condition notEmpty;
 
     /** Condition for waiting puts */
+    /** 进行写操作时如果队列已满，线程会被保存这里等待 */
     private final Condition notFull;
 
     /**
@@ -345,14 +352,21 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException {@inheritDoc}
      */
     public void put(E e) throws InterruptedException {
+        //检查插入的元素是不是 null
         checkNotNull(e);
         final ReentrantLock lock = this.lock;
+        //加锁（在获取锁的同时是可以响应中断的 ----  获取的过程中）
         lock.lockInterruptibly();
         try {
+            //会检查当前队列是不是已满
+            //count 是否等于数组的长度。如果等于就代表已经满
             while (count == items.length)
+                //当前进行等待，直到有空余的时，才会被通知，然后继续往下执行
                 notFull.await();
+            //让元素进入队列
             enqueue(e);
         } finally {
+            //解锁
             lock.unlock();
         }
     }
