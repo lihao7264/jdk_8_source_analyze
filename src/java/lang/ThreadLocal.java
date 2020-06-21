@@ -157,16 +157,22 @@ public class ThreadLocal<T> {
      * @return the current thread's value of this thread-local
      */
     public T get() {
+        //获取到当前线程
         Thread t = Thread.currentThread();
+        //获取到当前线程内的 ThreadLocalMap 对象，每个线程内都有一个 ThreadLocalMap 对象
         ThreadLocalMap map = getMap(t);
         if (map != null) {
+            // 获取 ThreadLocalMap 中的 Entry 对象并拿到 Value
+            // key:当前ThreadLocal对象
             ThreadLocalMap.Entry e = map.getEntry(this);
             if (e != null) {
                 @SuppressWarnings("unchecked")
+                // 获取Value值
                 T result = (T)e.value;
                 return result;
             }
         }
+        //如果线程内之前没创建过 ThreadLocalMap，就创建
         return setInitialValue();
     }
 
@@ -177,12 +183,17 @@ public class ThreadLocal<T> {
      * @return the initial value
      */
     private T setInitialValue() {
+        //初始值为创建ThreadLocal时候重写的方法返回
         T value = initialValue();
+        //获取到当前线程
         Thread t = Thread.currentThread();
+        //获取到当前线程内的 ThreadLocalMap 对象，每个线程内都有一个 ThreadLocalMap 对象
         ThreadLocalMap map = getMap(t);
         if (map != null)
+            // key:ThreadLocal  value: value值
             map.set(this, value);
         else
+            // 创建ThreadLocalMap
             createMap(t, value);
         return value;
     }
@@ -197,11 +208,15 @@ public class ThreadLocal<T> {
      *        this thread-local.
      */
     public void set(T value) {
+        // 获取当前线程
         Thread t = Thread.currentThread();
+        // 获取到当前线程内的 ThreadLocalMap 对象，每个线程内都有一个 ThreadLocalMap 对象
         ThreadLocalMap map = getMap(t);
         if (map != null)
+            // key:当前ThreadLocal对象  value:value入参
             map.set(this, value);
         else
+            // 创建ThreadLocalMap对象并设置key、value
             createMap(t, value);
     }
 
@@ -241,6 +256,7 @@ public class ThreadLocal<T> {
      * @param firstValue value for the initial entry of the map
      */
     void createMap(Thread t, T firstValue) {
+        // 创建ThreadLocalMap并将它赋值给Thread的threadLocals成员变量
         t.threadLocals = new ThreadLocalMap(this, firstValue);
     }
 
@@ -309,6 +325,11 @@ public class ThreadLocal<T> {
             /** The value associated with this ThreadLocal. */
             Object value;
 
+            /**
+             * key：当前的 ThreadLocal、value：实际需要存储的变量
+             * @param k
+             * @param v
+             */
             Entry(ThreadLocal<?> k, Object v) {
                 super(k);
                 value = v;

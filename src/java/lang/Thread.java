@@ -179,6 +179,9 @@ class Thread implements Runnable {
 
     /* ThreadLocal values pertaining to this thread. This map is maintained
      * by the ThreadLocal class. */
+    /* 与此线程有关的ThreadLocal值。 该映射由ThreadLocal类维护。
+    *  key：ThreadLocal、value：存储的值
+    * */
     ThreadLocal.ThreadLocalMap threadLocals = null;
 
     /*
