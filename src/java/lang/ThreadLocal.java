@@ -232,8 +232,10 @@ public class ThreadLocal<T> {
      * @since 1.5
      */
      public void remove() {
+         // 获取到当前线程内的 ThreadLocalMap 对象，每个线程内都有一个 ThreadLocalMap 对象
          ThreadLocalMap m = getMap(Thread.currentThread());
          if (m != null)
+             // 如果ThreadLocalMap 对象不为空，则移除当前ThreadLocal的entry
              m.remove(this);
      }
 
@@ -344,6 +346,8 @@ public class ThreadLocal<T> {
         /**
          * The table, resized as necessary.
          * table.length MUST always be a power of two.
+         * 该表，根据需要调整大小。
+         * table.length必须始终为2的幂次方。
          */
         private Entry[] table;
 
@@ -366,6 +370,7 @@ public class ThreadLocal<T> {
 
         /**
          * Increment i modulo len.
+         * 以模为单位递增。
          */
         private static int nextIndex(int i, int len) {
             return ((i + 1 < len) ? i + 1 : 0);
@@ -509,13 +514,18 @@ public class ThreadLocal<T> {
          * Remove the entry for key.
          */
         private void remove(ThreadLocal<?> key) {
+            // entry数组
             Entry[] tab = table;
+            // entry数组的上次
             int len = tab.length;
             int i = key.threadLocalHashCode & (len-1);
+            // 循环遍历所以entry数组
             for (Entry e = tab[i];
                  e != null;
                  e = tab[i = nextIndex(i, len)]) {
+                // 当前的key(Reference的referent成员变量)
                 if (e.get() == key) {
+                    // 清除key
                     e.clear();
                     expungeStaleEntry(i);
                     return;
@@ -601,9 +611,11 @@ public class ThreadLocal<T> {
          * lying between staleSlot and the next null slot.  This also expunges
          * any other stale entries encountered before the trailing null.  See
          * Knuth, Section 6.4
+         * 通过重新散列位于staleSlot和下一个空插槽之间的任何可能冲突的条目，来清除陈旧的条目。
+         * 这还会清除尾随null之前遇到的所有其它过时的条目。
          *
-         * @param staleSlot index of slot known to have null key
-         * @return the index of the next null slot after staleSlot
+         * @param staleSlot index of slot known to have null key   已知具有空键的插槽下标
+         * @return the index of the next null slot after staleSlot   staleSlot之后的下一个空槽的下标(（所有staleSlot和此插槽之间的空间都将被检查清除）。)
          * (all between staleSlot and this slot will have been checked
          * for expunging).
          */

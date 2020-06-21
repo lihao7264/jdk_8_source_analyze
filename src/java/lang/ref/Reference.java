@@ -89,6 +89,7 @@ public abstract class Reference<T> {
      * field is also used for linking Reference objects in the pending list.
      */
 
+    /* 就是key */
     private T referent;         /* Treated specially by GC */
 
     volatile ReferenceQueue<? super T> queue;
@@ -243,6 +244,7 @@ public abstract class Reference<T> {
     /* -- Referent accessor and setters -- */
 
     /**
+     * 获取key
      * Returns this reference object's referent.  If this reference object has
      * been cleared, either by the program or by the garbage collector, then
      * this method returns <code>null</code>.
@@ -260,6 +262,10 @@ public abstract class Reference<T> {
      *
      * <p> This method is invoked only by Java code; when the garbage collector
      * clears references it does so directly, without invoking this method.
+     */
+    /**
+     * 设置key为null
+     * 清除此参考对象。 调用此方法不会导致该对象入队。
      */
     public void clear() {
         this.referent = null;
