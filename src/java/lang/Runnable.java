@@ -47,10 +47,10 @@ package java.lang;
  * unless the programmer intends on modifying or enhancing the fundamental
  * behavior of the class.
  *
- * @author  Arthur van Hoff
- * @see     java.lang.Thread
- * @see     java.util.concurrent.Callable
- * @since   JDK1.0
+ * @author Arthur van Hoff
+ * @see java.lang.Thread
+ * @see java.util.concurrent.Callable
+ * @since JDK1.0
  */
 @FunctionalInterface
 public interface Runnable {
@@ -63,7 +63,12 @@ public interface Runnable {
      * The general contract of the method <code>run</code> is that it may
      * take any action whatsoever.
      *
-     * @see     java.lang.Thread#run()
+     * @see java.lang.Thread#run()
+     * <p>
+     * 规定了 run() 方法的返回类型是 void，而且这个方法没有声明抛出任何异常。
+     * 所以，当实现并重写这个方法时，我们既不能改返回值类型，
+     * 也不能更改对于异常抛出的描述，因为在实现方法的时候，
+     * 语法规定是不允许对这些内容进行修改的。
      */
     public abstract void run();
 }
