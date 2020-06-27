@@ -27,7 +27,8 @@ package java.util;
 
 /**
  * A task that can be scheduled for one-time or repeated execution by a Timer.
- *
+ * 一个被Timer类执行的任务,实现Runnable接口
+ * 可以安排一次或通过计时器重复执行的任务。
  * @author  Josh Bloch
  * @see     Timer
  * @since   1.3
@@ -36,33 +37,40 @@ package java.util;
 public abstract class TimerTask implements Runnable {
     /**
      * This object is used to control access to the TimerTask internals.
+     * 控制访问TimerTask内部的锁
      */
     final Object lock = new Object();
 
     /**
      * The state of this task, chosen from the constants below.
+     * 任务的状态，从下面的四种常量中选择。
      */
     int state = VIRGIN;
 
     /**
      * This task has not yet been scheduled.
+     * 初始化状态，任务还没有被执行
      */
     static final int VIRGIN = 0;
 
     /**
      * This task is scheduled for execution.  If it is a non-repeating task,
      * it has not yet been executed.
+     *
+     * 任务已经计划执行(如果不是一个重复执行的任务，它就还没有被执行过)
      */
     static final int SCHEDULED   = 1;
 
     /**
      * This non-repeating task has already executed (or is currently
      * executing) and has not been cancelled.
+     * 非重复性任务已经被执行了（或者正在执行），并且没有被取消
      */
     static final int EXECUTED    = 2;
 
     /**
      * This task has been cancelled (with a call to TimerTask.cancel).
+     * 任务已经被取消（调用TimerTask.cancel）
      */
     static final int CANCELLED   = 3;
 
@@ -70,6 +78,7 @@ public abstract class TimerTask implements Runnable {
      * Next execution time for this task in the format returned by
      * System.currentTimeMillis, assuming this task is scheduled for execution.
      * For repeating tasks, this field is updated prior to each task execution.
+     * 下一次任务执行的时间，如果是重复性任务，会在每一个任务执行前更新
      */
     long nextExecutionTime;
 
@@ -77,17 +86,22 @@ public abstract class TimerTask implements Runnable {
      * Period in milliseconds for repeating tasks.  A positive value indicates
      * fixed-rate execution.  A negative value indicates fixed-delay execution.
      * A value of 0 indicates a non-repeating task.
+     *
+     * 重复性任务的周期时间，一个正值表明是固定频率fixed-rate执行，
+     * 负值表明固定延迟fixed-delay执行，0表示非重复性任务。
      */
     long period = 0;
 
     /**
      * Creates a new timer task.
+     * 构造函数
      */
     protected TimerTask() {
     }
 
     /**
      * The action to be performed by this timer task.
+     * timerTask需要执行的具体操作，需要重写
      */
     public abstract void run();
 
@@ -105,6 +119,8 @@ public abstract class TimerTask implements Runnable {
      * <p>This method may be called repeatedly; the second and subsequent
      * calls have no effect.
      *
+     * 取消任务，如果任务正在执行中，会执行完。
+     *
      * @return true if this task is scheduled for one-time execution and has
      *         not yet run, or this task is scheduled for repeated execution.
      *         Returns false if the task was scheduled for one-time execution
@@ -112,10 +128,14 @@ public abstract class TimerTask implements Runnable {
      *         the task was already cancelled.  (Loosely speaking, this method
      *         returns <tt>true</tt> if it prevents one or more scheduled
      *         executions from taking place.)
+     *
      */
     public boolean cancel() {
+        // 加锁
         synchronized(lock) {
+            // 如果状态为SCHEDULED，则成功
             boolean result = (state == SCHEDULED);
+            // 状态为CANCELLED
             state = CANCELLED;
             return result;
         }
@@ -142,6 +162,7 @@ public abstract class TimerTask implements Runnable {
      * <i>fixed-delay execution</i> repeating tasks, as their scheduled
      * execution times are allowed to drift over time, and so are not terribly
      * significant.
+     * 最近一次执行时间
      *
      * @return the time at which the most recent execution of this task was
      *         scheduled to occur, in the format returned by Date.getTime().
@@ -150,7 +171,10 @@ public abstract class TimerTask implements Runnable {
      * @see Date#getTime()
      */
     public long scheduledExecutionTime() {
+        // 加锁
         synchronized(lock) {
+            // 重复性任务的周期时间小于0，则最近一次执行时间=下一次任务执行的时间+重复性任务的周期时间
+            // 重复性任务的周期时间大于等于0，则最近一次执行时间=下一次任务执行的时间-重复性任务的周期时间
             return (period < 0 ? nextExecutionTime + period
                                : nextExecutionTime - period);
         }

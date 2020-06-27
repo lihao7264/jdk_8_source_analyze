@@ -56,9 +56,23 @@ import java.util.concurrent.locks.LockSupport;
  * {@code protected} functionality that may be useful when creating
  * customized task classes.
  *
+ * 可取消的异步计算。
+ * 类提供{@link Future}的基本实现，其中包含启动和取消计算，
+ * 查询以查看计算是否完成以及检索计算结果的方法。
+ * 只有在计算完成后才能检索结果;
+ * 如果计算尚未完成，则{@code get}方法将阻塞。
+ * 一旦计算完成，就不能重新开始或取消计算（除非使用{@link #runAndReset}调用计算）。
+ *
+ * {@code FutureTask}可用于包装{@link Callable}或{@link Runnable}对象。
+ * 由于{@code FutureTask}实现了{@code Runnable}，因此可以将{@code FutureTask}提交给{@link Executor}以便执行。
+ *
+ * 除了用作独立类之外，此类还提供{@code protected}功能，
+ * 这些功能在创建自定义任务类时可能会很有用。
+ *
  * @since 1.5
  * @author Doug Lea
  * @param <V> The result type returned by this FutureTask's {@code get} methods
+ *           此FutureTask的{@code get}方法返回的结果类型
  */
 public class FutureTask<V> implements RunnableFuture<V> {
     /*
@@ -83,11 +97,22 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * states use cheaper ordered/lazy writes because values are unique
      * and cannot be further modified.
      *
+     * 此任务的运行状态，最初为NEW。
+     * 运行状态仅在set、setException和cancel方法中转换为终端状态。
+     * 在完成过程中，状态可能会采用COMPLETING（正在设置结果时）或INTERRUPTING（仅在中断该线程满足cancel（true）时）的瞬态值。
+     * 从这些中间状态到最终状态的转换使用有序/惰性写入，因为值是唯一的，无法进一步修改。
+     *
      * Possible state transitions:
      * NEW -> COMPLETING -> NORMAL
      * NEW -> COMPLETING -> EXCEPTIONAL
      * NEW -> CANCELLED
      * NEW -> INTERRUPTING -> INTERRUPTED
+     *
+     * 可能的状态转换：
+     *  新增->完成->正常
+     *  新增->完成->异常
+     *  新增->已取消
+     *  新增->中断->已中断
      */
     private volatile int state;
     private static final int NEW          = 0;

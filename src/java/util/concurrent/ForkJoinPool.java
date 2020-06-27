@@ -1265,6 +1265,11 @@ public class ForkJoinPool extends AbstractExecutorService {
      * construction exception, but internal usages null-check on use
      * to paranoically avoid potential initialization circularities
      * as well as to simplify generated code.
+     *
+     * 公用（静态）池。
+     * 除非有静态构造例外，
+     * 否则非null供公众使用，
+     * 但内部使用时对使用进行null检查会偏执地避免潜在的初始化循环以及简化生成的代码。
      */
     static final ForkJoinPool common;
 
@@ -1273,6 +1278,12 @@ public class ForkJoinPool extends AbstractExecutorService {
      * when common pool threads are disabled, we allow the underlying
      * common.parallelism field to be zero, but in that case still report
      * parallelism as 1 to reflect resulting caller-runs mechanics.
+     *
+     * 通用池并行性。
+     * 为了在禁用公共池线程时允许更简单的使用和管理，
+     * 我们允许底层的common.parallelism字段为零，
+     * 但在那种情况下，仍将并行度报告为1，以反映最终的调用程序运行机制。
+     *
      */
     static final int commonParallelism;
 
@@ -2763,8 +2774,8 @@ public class ForkJoinPool extends AbstractExecutorService {
 
     /**
      * Returns the targeted parallelism level of the common pool.
-     *
-     * @return the targeted parallelism level of the common pool
+     * 返回公共池的目标并行度。
+     * @return the targeted parallelism level of the common pool 公共池的目标并行度
      * @since 1.8
      */
     public static int getCommonPoolParallelism() {

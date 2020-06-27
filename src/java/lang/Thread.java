@@ -714,7 +714,7 @@ class Thread implements Runnable {
          * so that it can be added to the group's list of threads
          * and the group's unstarted count can be decremented. */
         group.add(this);
-
+        // 未启动
         boolean started = false;
         try {
             start0();

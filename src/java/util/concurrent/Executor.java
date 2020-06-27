@@ -50,36 +50,36 @@ package java.util.concurrent;
  * executor.execute(new RunnableTask2());
  * ...
  * </pre>
- *
+ * <p>
  * However, the {@code Executor} interface does not strictly
  * require that execution be asynchronous. In the simplest case, an
  * executor can run the submitted task immediately in the caller's
  * thread:
  *
- *  <pre> {@code
+ * <pre> {@code
  * class DirectExecutor implements Executor {
  *   public void execute(Runnable r) {
  *     r.run();
  *   }
  * }}</pre>
- *
+ * <p>
  * More typically, tasks are executed in some thread other
  * than the caller's thread.  The executor below spawns a new thread
  * for each task.
  *
- *  <pre> {@code
+ * <pre> {@code
  * class ThreadPerTaskExecutor implements Executor {
  *   public void execute(Runnable r) {
  *     new Thread(r).start();
  *   }
  * }}</pre>
- *
+ * <p>
  * Many {@code Executor} implementations impose some sort of
  * limitation on how and when tasks are scheduled.  The executor below
  * serializes the submission of tasks to a second executor,
  * illustrating a composite executor.
  *
- *  <pre> {@code
+ * <pre> {@code
  * class SerialExecutor implements Executor {
  *   final Queue<Runnable> tasks = new ArrayDeque<Runnable>();
  *   final Executor executor;
@@ -110,7 +110,7 @@ package java.util.concurrent;
  *     }
  *   }
  * }}</pre>
- *
+ * <p>
  * The {@code Executor} implementations provided in this package
  * implement {@link ExecutorService}, which is a more extensive
  * interface.  The {@link ThreadPoolExecutor} class provides an
@@ -122,8 +122,8 @@ package java.util.concurrent;
  * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
  * its execution begins, perhaps in another thread.
  *
- * @since 1.5
  * @author Doug Lea
+ * @since 1.5
  */
 public interface Executor {
 
@@ -131,11 +131,17 @@ public interface Executor {
      * Executes the given command at some time in the future.  The command
      * may execute in a new thread, in a pooled thread, or in the calling
      * thread, at the discretion of the {@code Executor} implementation.
+     * <p>
+     * 在将来的某个时间执行给定任务。
+     * 根据{@code Executor}实现的判断，
+     * 命令可以在新线程、线程池或调用线程中执行。
      *
-     * @param command the runnable task
+     * @param command the runnable task  任务
      * @throws RejectedExecutionException if this task cannot be
-     * accepted for execution
-     * @throws NullPointerException if command is null
+     *                                    accepted for execution
+     *                                    如果无法接受此任务执行，则抛出RejectedExecutionException
+     * @throws NullPointerException       if command is null
+     *                                    如果任务为空，则抛出NullPointerException
      */
     void execute(Runnable command);
 }
