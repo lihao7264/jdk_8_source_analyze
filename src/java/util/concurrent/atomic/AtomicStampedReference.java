@@ -46,26 +46,46 @@ package java.util.concurrent.atomic;
  * @since 1.5
  * @author Doug Lea
  * @param <V> The type of object referred to by this reference
+ * 参考地址：https://segmentfault.com/a/1190000020601800
+ * 情况一：
+ *   如果元素值和版本号都没有变化，并且和新的也相同，返回true。
+ *
+ * 情况二：
+ *   如果元素值和版本号都没有变化，并且和新的不完全相同，就构造一个新的Pair对象并执行CAS更新pair。
+ *
+ * 解决ABA问题的方法：
+ *   a、使用版本号控制
+ *   b、不重复使用节点（Pair）的引用，每次都新建一个新的Pair来作为CAS比较的对象，而不是复用旧的
+ *   c、外部传入元素值及版本号，而不是节点（Pair）的引用
  */
 public class AtomicStampedReference<V> {
 
+    /**
+     * 将值和版本号封装为一个Pair，比较就是比较这个Pair
+     * @param <T>
+     */
     private static class Pair<T> {
         final T reference;
+        //时间戳
         final int stamp;
         private Pair(T reference, int stamp) {
             this.reference = reference;
             this.stamp = stamp;
         }
+
+        //创建一个Pair对象
         static <T> Pair<T> of(T reference, int stamp) {
             return new Pair<T>(reference, stamp);
         }
     }
 
+    // 多个线程同时修改这个pair要可见。比如：一直自加到100
     private volatile Pair<V> pair;
 
     /**
      * Creates a new {@code AtomicStampedReference} with the given
      * initial values.
+     * 构造AtomicStampedReference时候把要多线程修改的值封装成pair
      *
      * @param initialRef the initial reference
      * @param initialStamp the initial stamp
@@ -77,6 +97,8 @@ public class AtomicStampedReference<V> {
     /**
      * Returns the current value of the reference.
      *
+     * 获取准备通过AtomicStampedReference来改变的值。
+     *
      * @return the current value of the reference
      */
     public V getReference() {
@@ -85,6 +107,8 @@ public class AtomicStampedReference<V> {
 
     /**
      * Returns the current value of the stamp.
+     *
+     * 获取准备通过AtomicStampedReference来改变的值的版本号。
      *
      * @return the current value of the stamp
      */
@@ -141,17 +165,25 @@ public class AtomicStampedReference<V> {
      * @param expectedStamp the expected value of the stamp
      * @param newStamp the new value for the stamp
      * @return {@code true} if successful
+     *
      */
     public boolean compareAndSet(V   expectedReference,
                                  V   newReference,
                                  int expectedStamp,
                                  int newStamp) {
+        // 获取当前的（元素值，版本号）对
         Pair<V> current = pair;
         return
+            // 引用没变
             expectedReference == current.reference &&
+            // 版本号没变
             expectedStamp == current.stamp &&
+
+            // 新引用等于旧引用
             ((newReference == current.reference &&
-              newStamp == current.stamp) ||
+              // 新版本号等于旧版本号
+              newStamp == current.stamp) ||  //使用短路||
+             // 构造新的Pair对象并CAS更新
              casPair(current, Pair.of(newReference, newStamp)));
     }
 
@@ -191,10 +223,13 @@ public class AtomicStampedReference<V> {
     // Unsafe mechanics
 
     private static final sun.misc.Unsafe UNSAFE = sun.misc.Unsafe.getUnsafe();
+
+    //声明一个Pair类型的变量并使用Unsfae获取其偏移量，存储到pairOffset中
     private static final long pairOffset =
         objectFieldOffset(UNSAFE, "pair", AtomicStampedReference.class);
 
     private boolean casPair(Pair<V> cmp, Pair<V> val) {
+        // 调用Unsafe的compareAndSwapObject()方法CAS更新pair的引用为新引用
         return UNSAFE.compareAndSwapObject(this, pairOffset, cmp, val);
     }
 

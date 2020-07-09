@@ -328,6 +328,7 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
     public boolean offer(E e) {
         //检查插入的元素是不是 null
         checkNotNull(e);
+        // 创建节点
         final Node<E> newNode = new Node<E>(e);
 
         //死循环

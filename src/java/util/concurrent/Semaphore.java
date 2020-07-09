@@ -150,6 +150,14 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * actions following a successful "acquire" method such as {@code acquire()}
  * in another thread.
  *
+ * 举例：
+ *  把 Semaphore 的许可证数量设置为 1，那么由于它只有一个许可证，
+ *  所以只能允许一个线程通过，并且当之前的线程归还许可证后，
+ *  会允许其它线程继续获得许可证。
+ *  那如果线程发现当前没有额外的许可证时，或者当前得不到锁，那么线程就会被阻塞，
+ *  并且等到后续有许可证或者锁释放出来后，被唤醒。
+ *
+ *
  * @since 1.5
  * @author Doug Lea
  */

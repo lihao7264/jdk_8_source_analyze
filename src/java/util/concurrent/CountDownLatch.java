@@ -149,7 +149,15 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
  * actions following a successful return from a corresponding
  * {@code await()} in another thread.
+ * 非独占类型的
  *
+ * 举例：
+ *  a、当线程调用 CountDownLatch 的 await 方法时，便会尝试获取"共享锁"，
+ *     不过一开始通常获取不到锁，于是线程被阻塞。"共享锁"可获取到的条件是"锁计数器"的值为 0，
+ *     而"锁计数器"的初始值为 count，当每次调用 CountDownLatch 对象的 countDown 方法时，
+ *     也可以把"锁计数器" -1。通过这种方式，调用 count 次 countDown 方法之后，
+ *     "锁计数器"就为 0 了，于是之前等待的线程就会继续运行了，
+ *     并且此时如果再有线程想调用 await 方法时也会被立刻放行，不会再去做任何阻塞操作了。
  * @since 1.5
  * @author Doug Lea
  */
@@ -157,46 +165,64 @@ public class CountDownLatch {
     /**
      * Synchronization control For CountDownLatch.
      * Uses AQS state to represent count.
+     * 第一步：Sync这个类正是继承自 AQS
+     * 第二步：而且还重写了 tryAcquireShared 和 tryReleaseShared 方法
+     *
+     * CountDownLatch的同步控件。 使用AQS state表示计数。
      */
     private static final class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 4982264981922014374L;
 
         Sync(int count) {
+            //调用了 AQS 的 setState 方法，并且把 count 传进去
             setState(count);
         }
 
         int getCount() {
+            //调用了 AQS 的 getState 方法
             return getState();
         }
 
         protected int tryAcquireShared(int acquires) {
+            // 直接判断 getState 的值是不是等于 0，如果等于 0 就返回 1，不等于0则返回 -1。
             return (getState() == 0) ? 1 : -1;
         }
 
         protected boolean tryReleaseShared(int releases) {
             // Decrement count; signal when transition to zero
+            // for 的死循环
             for (;;) {
+                // 通过 getState 拿到当前 state 的值并赋值给变量 c
                 int c = getState();
+                // 如果此时 c = 0，则意味着已经倒数为零了,则返回false
                 if (c == 0)
                     return false;
+                // 如果 c 不等于 0，在这里会先把 c-1 的值赋给 nextc，然后再利用 CAS 尝试把 nextc 赋值到 state 上。
+                // 如果赋值成功就代表本次 countDown 方法操作成功，也就意味着把 AQS 内部的 state 值减了1。
                 int nextc = c-1;
                 if (compareAndSetState(c, nextc))
+                    // 如果nextc为0，意味着本次倒数后恰好达到了规定的倒数次数，门闩应当在此时打开，所以 tryReleaseShared 方法会返回 true
                     return nextc == 0;
             }
         }
     }
 
+    //CountDownLatch的同步控件属性
     private final Sync sync;
 
     /**
      * Constructs a {@code CountDownLatch} initialized with the given count.
+     * 构造一个用给定计数初始化的CountDownLatch。
      *
      * @param count the number of times {@link #countDown} must be invoked
-     *        before threads can pass through {@link #await}
+     *        before threads can pass through {@link #await}  需要倒数的次数
      * @throws IllegalArgumentException if {@code count} is negative
      */
     public CountDownLatch(int count) {
+        //当 count < 0 时会抛出异常
         if (count < 0) throw new IllegalArgumentException("count < 0");
+
+        //当count > = 0，即代码this.sync = new Sync(count) ，往Sync中传入了count(代表还需要倒数的次数)
         this.sync = new Sync(count);
     }
 
@@ -223,6 +249,10 @@ public class CountDownLatch {
      * </ul>
      * then {@link InterruptedException} is thrown and the current thread's
      * interrupted status is cleared.
+     *
+     * CountDownLatch的"获取"方法
+     * 调用await方法会把线程阻塞，直到倒数为0才能继续执行
+     * await 方法和 countDown 是配对的
      *
      * @throws InterruptedException if the current thread is interrupted
      *         while waiting
@@ -286,8 +316,11 @@ public class CountDownLatch {
      * thread scheduling purposes.
      *
      * <p>If the current count equals zero then nothing happens.
+     *
+     * CountDownLatch的”释放“方法
      */
     public void countDown() {
+        // 调用的是 sync 的 releaseShared方法
         sync.releaseShared(1);
     }
 
@@ -296,6 +329,7 @@ public class CountDownLatch {
      *
      * <p>This method is typically used for debugging and testing purposes.
      *
+     *获取当前剩余的还需要"倒数"的数量
      * @return the current count
      */
     public long getCount() {

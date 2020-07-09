@@ -151,8 +151,8 @@ public class AtomicInteger extends Number implements java.io.Serializable {
 
     /**
      * Atomically increments by one the current value.
-     *
-     * @return the previous value
+     * 以原子方式将当前值增一
+     * @return the previous value  之前的值
      */
     public final int getAndIncrement() {
         return unsafe.getAndAddInt(this, valueOffset, 1);
@@ -160,8 +160,8 @@ public class AtomicInteger extends Number implements java.io.Serializable {
 
     /**
      * Atomically decrements by one the current value.
-     *
-     * @return the previous value
+     * 以原子方式将当前值减一。
+     * @return the previous value  之前的值
      */
     public final int getAndDecrement() {
         return unsafe.getAndAddInt(this, valueOffset, -1);

@@ -940,9 +940,15 @@ class Thread implements Runnable {
      * <p>A thread interruption ignored because a thread was not alive
      * at the time of the interrupt will be reflected by this method
      * returning false.
+     * 测试当前线程是否已被中断。通过此方法可以清除线程的中断状态。
+     * 换句话说，如果要连续调用此方法两次，则第二次调用将返回false（除非当前线程在第一次调用清除其中断状态之后且在第二次调用检查其状态之前再次中断）。
+     *
+     * 由于此方法返回false，因此将反映线程中断，因为该线程在中断时尚未处于活动状态而被忽略。
      *
      * @return  <code>true</code> if the current thread has been interrupted;
      *          <code>false</code> otherwise.
+     *          true 当前线程被中断
+     *          否则，false
      * @see #isInterrupted()
      * @revised 6.0
      */
@@ -958,8 +964,13 @@ class Thread implements Runnable {
      * at the time of the interrupt will be reflected by this method
      * returning false.
      *
+     * 测试此线程是否已被中断。 线程的中断状态不受此方法的影响。
+     * 由于此方法返回false，因此将反映线程中断，因为该线程在中断时尚未处于活动状态而被忽略。
+     *
      * @return  <code>true</code> if this thread has been interrupted;
      *          <code>false</code> otherwise.
+     *          true 当前线程被中断
+     *          否则，false
      * @see     #interrupted()
      * @revised 6.0
      */

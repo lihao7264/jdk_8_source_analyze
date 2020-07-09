@@ -283,6 +283,8 @@ import sun.misc.Unsafe;
  *   }
  * }}</pre>
  *
+ * AQS基础类
+ * 学习博客：https://javadoop.com/post/AbstractQueuedSynchronizer
  * @since 1.5
  * @author Doug Lea
  */
@@ -376,6 +378,7 @@ public abstract class AbstractQueuedSynchronizer
      * Scherer and Michael Scott, along with members of JSR-166
      * expert group, for helpful ideas, discussions, and critiques
      * on the design of this class.
+     * 双向链表
      */
     static final class Node {
         /** Marker to indicate a node is waiting in shared mode */
@@ -462,6 +465,8 @@ public abstract class AbstractQueuedSynchronizer
         /**
          * The thread that enqueued this node.  Initialized on
          * construction and nulled out after use.
+         *
+         * 是该节点排队的线程。 在构造上初始化，使用后消失。
          */
         volatile Thread thread;
 
@@ -514,21 +519,47 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * FIFO 队列（即先进先出队列），这个队列最主要的作用是存储等待的线程。
+     * 当大部分的线程抢不到锁的时候，就得需要有一个队列来存放、管理它们。所以 AQS 的一大功能就是充当线程的"排队管理器"。
+     * 初始化时，等待队列的头尾节点都指向了一个空节点
+     */
+
+    /**
      * Head of the wait queue, lazily initialized.  Except for
      * initialization, it is modified only via method setHead.  Note:
      * If head exists, its waitStatus is guaranteed not to be
      * CANCELLED.
+     *
+     * 等待队列的头节点
+     * 也可以理解为"当前持有锁的线程"
+     * 而在头节点之后的线程就被阻塞了，它们会等待被唤醒，唤醒也是由 AQS 负责操作的
      */
     private transient volatile Node head;
 
     /**
      * Tail of the wait queue, lazily initialized.  Modified only via
      * method enq to add new wait node.
+     *
+     * 等待队列的尾节点
      */
     private transient volatile Node tail;
 
     /**
      * The synchronization state.
+     */
+
+    /**
+     * state 状态(同步状态)
+     * 举例：
+     *  a、在信号量里面，state表示的是剩余许可证的数量。
+     *  b、在 CountDownLatch 工具类里面，state表示的是需要"倒数"的数量。
+     *  c、在 ReentrantLock 中它表示的是锁的占有情况。
+     *     最开始是 0，表示没有任何线程占有锁；
+     *     如果state变成 1，则就代表这个锁已经被某一个线程所持有了。
+     *     如果这个锁被同一个线程多次获取，那么 state 就会逐渐的往上加，state 的值表示重入的次数。(在释放的时候也是逐步递减)
+     *
+     * 注意：a、state 本身它仅仅是被 volatile 修饰的，volatile 本身并不足以保证线程安全。(但是修改该值的方法都是线程安全的)
+     * 总结：在 AQS 中有state这样的一个属性，是被volatile修饰的，会被并发修改，它代表当前工具类的某种状态，在不同的类中代表不同的含义
      */
     private volatile int state;
 
@@ -536,6 +567,8 @@ public abstract class AbstractQueuedSynchronizer
      * Returns the current value of synchronization state.
      * This operation has memory semantics of a {@code volatile} read.
      * @return current state value
+     *
+     * 在CountDownLatch中，该方法获取到的值是剩余需要倒数的次数
      */
     protected final int getState() {
         return state;
@@ -544,6 +577,9 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Sets the value of synchronization state.
      * This operation has memory semantics of a {@code volatile} write.
+     *
+     * 直接赋值,结合volatile（当对基本类型的变量进行直接赋值时，如果加了 volatile 就可以保证它的线程安全）
+     * 给AQS中的 state 变量赋值的
      * @param newState the new state value
      */
     protected final void setState(int newState) {
@@ -556,6 +592,7 @@ public abstract class AbstractQueuedSynchronizer
      * This operation has memory semantics of a {@code volatile} read
      * and write.
      *
+     * 利用了 Unsafe 里面的 CAS 操作，利用 CPU 指令的原子性保证了这个操作的原子性
      * @param expect the expected value
      * @param update the new value
      * @return {@code true} if successful. False return indicates that the actual
@@ -975,6 +1012,8 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Acquires in shared interruptible mode.
+     *
+     * 在共享可中断模式下获取。(让线程进入阻塞状态)
      * @param arg the acquire argument
      */
     private void doAcquireSharedInterruptibly(int arg)
@@ -1059,6 +1098,23 @@ public abstract class AbstractQueuedSynchronizer
      *
      * <p>The default
      * implementation throws {@link UnsupportedOperationException}.
+     * 独占
+     * 获取方法：获取操作通常会依赖 state 变量的值，根据 state 值不同，
+     *         协作工具类也会有不同的逻辑，并且在获取的时候也经常会阻塞。
+     * 举例：
+     *   a、ReentrantLock 中的 lock 方法就是其中一个”获取方法”，
+     *     执行时，如果发现 state 不等于 0 且当前线程不是持有锁的线程，
+     *     那么就代表这个锁已经被其它线程所持有了。
+     *     这个时候，当然就获取不到锁，于是就让该线程进入阻塞状态。
+     *   b、Semaphore 中的 acquire 方法就是其中一个”获取方法”，
+     *     作用是获取许可证，此时能不能获取到这个许可证也取决于 state 的值。
+     *     如果 state 值是正数，那么代表还有剩余的许可证，数量足够的话，就可以成功获取；
+     *     但如果 state 是 0，则代表已经没有更多的空余许可证了，
+     *     此时这个线程就获取不到许可证，会进入阻塞状态，所以这里同样也是和 state 的值相关的。
+     *   c、CountDownLatch 获取方法就是 await 方法（包含重载方法），作用是”等待，直到倒数结束”。
+     *      执行 await 的时候会判断 state 的值，如果 state 不等于 0，
+     *      线程就陷入阻塞状态，直到其它线程执行倒数方法把 state 减为 0，
+     *      此时就代表现在这个门闩放开了，所以之前阻塞的线程就会被唤醒。
      *
      * @param arg the acquire argument. This value is always the one
      *        passed to an acquire method, or is the value saved on entry
@@ -1084,7 +1140,14 @@ public abstract class AbstractQueuedSynchronizer
      *
      * <p>The default implementation throws
      * {@link UnsupportedOperationException}.
-     *
+     * 独占
+     * 释放方法：站在获取方法的对立面的，通常和刚才的获取方法配合使用，
+     *          但是释放方法通常是不会阻塞线程的。
+     * 举例：
+     *    a、在 Semaphore 信号量里面，释放就是 release 方法（包含重载方法），
+     *       release() 方法的作用是去释放一个许可证，会让 state 加 1。
+     *    b、在 CountDownLatch 里面，释放就是 countDown 方法，
+     *       作用是倒数一个数，让 state 减 1。
      * @param arg the release argument. This value is always the one
      *        passed to a release method, or the current state value upon
      *        entry to a condition wait.  The value is otherwise
@@ -1115,6 +1178,7 @@ public abstract class AbstractQueuedSynchronizer
      * <p>The default implementation throws {@link
      * UnsupportedOperationException}.
      *
+     * 非独占
      * @param arg the acquire argument. This value is always the one
      *        passed to an acquire method, or is the value saved on entry
      *        to a condition wait.  The value is otherwise uninterpreted
@@ -1145,6 +1209,8 @@ public abstract class AbstractQueuedSynchronizer
      *
      * <p>The default implementation throws
      * {@link UnsupportedOperationException}.
+     *
+     * 非独占
      *
      * @param arg the release argument. This value is always the one
      *        passed to a release method, or the current state value upon
@@ -1189,7 +1255,7 @@ public abstract class AbstractQueuedSynchronizer
      * repeatedly blocking and unblocking, invoking {@link
      * #tryAcquire} until success.  This method can be used
      * to implement method {@link Lock#lock}.
-     *
+     * 独占
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquire} but is otherwise uninterpreted and
      *        can represent anything you like.
@@ -1251,7 +1317,7 @@ public abstract class AbstractQueuedSynchronizer
      * Releases in exclusive mode.  Implemented by unblocking one or
      * more threads if {@link #tryRelease} returns true.
      * This method can be used to implement method {@link Lock#unlock}.
-     *
+     * 独占
      * @param arg the release argument.  This value is conveyed to
      *        {@link #tryRelease} but is otherwise uninterpreted and
      *        can represent anything you like.
@@ -1273,7 +1339,7 @@ public abstract class AbstractQueuedSynchronizer
      * returning on success.  Otherwise the thread is queued, possibly
      * repeatedly blocking and unblocking, invoking {@link
      * #tryAcquireShared} until success.
-     *
+     * 非独占
      * @param arg the acquire argument.  This value is conveyed to
      *        {@link #tryAcquireShared} but is otherwise uninterpreted
      *        and can represent anything you like.
@@ -1290,6 +1356,8 @@ public abstract class AbstractQueuedSynchronizer
      * thread is queued, possibly repeatedly blocking and unblocking,
      * invoking {@link #tryAcquireShared} until success or the thread
      * is interrupted.
+     *
+     * 非独占
      * @param arg the acquire argument.
      * This value is conveyed to {@link #tryAcquireShared} but is
      * otherwise uninterpreted and can represent anything
@@ -1298,8 +1366,16 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final void acquireSharedInterruptibly(int arg)
             throws InterruptedException {
+        // 对于中断的处理：如果线程被中断了，则抛出中断异常
         if (Thread.interrupted())
             throw new InterruptedException();
+
+        // a、一旦返回 -1,就会符合 if 的判断条件，
+        //    并且去执行 doAcquireSharedInterruptibly 方法，然后会让线程进入阻塞状态
+        // b、当 state 如果此时已经等于0了，那就意味着倒数其实结束了，
+        //    不需要再去等待了，就是说门闩是打开状态，所以说此时getState返回0，
+        //    tryAcquireShared 方法返回 1 ，一旦返回 1，对于 acquireSharedInterruptibly 方法而言相当于立刻返回，
+        //    也就意味着 await 方法会立刻返回，那么此时线程就不会进入阻塞状态了，相当于倒数已经结束，立刻放行了。
         if (tryAcquireShared(arg) < 0)
             doAcquireSharedInterruptibly(arg);
     }
@@ -1331,13 +1407,17 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Releases in shared mode.  Implemented by unblocking one or more
      * threads if {@link #tryReleaseShared} returns true.
-     *
+     * 非独占
      * @param arg the release argument.  This value is conveyed to
      *        {@link #tryReleaseShared} but is otherwise uninterpreted
      *        and can represent anything you like.
      * @return the value returned from {@link #tryReleaseShared}
      */
     public final boolean releaseShared(int arg) {
+        //先判断tryReleaseShared方法的返回结果
+        // 1、如果返回false，就会直接跳过整个 if (tryReleaseShared(arg)) 代码块，
+        //    直接返回false，相当于 releaseShared方法不产生效果，也就意味着countDown方法不产生效果。
+        // 2、如果返回true，接下来会调用 doReleaseShared方法，效果是对之前阻塞的线程进行唤醒，让它们继续执行。
         if (tryReleaseShared(arg)) {
             doReleaseShared();
             return true;

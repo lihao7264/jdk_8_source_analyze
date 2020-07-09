@@ -100,6 +100,9 @@ import java.util.Collection;
  * the same thread. Attempts to exceed this limit result in
  * {@link Error} throws from locking methods.
  *
+ * 举例：
+ *   只有一个线程能获得锁，并且当这个线程释放锁之后，
+ *   会允许其它的线程获得锁。
  * @since 1.5
  * @author Doug Lea
  */

@@ -122,12 +122,19 @@ public final class String
         implements java.io.Serializable, Comparable<String>, CharSequence {
     /** The value is used for character storage. */
     /*该值用于字符存储  ---  字符串的底层存储结构*/
+    //value 是不可变:
+    //a、存储着字符串的每一位字符，同时 value 数组是被 final 修饰的，也就是说，这个 value 一旦被赋值，引用就不能修改了
+    //b、除了构造函数能修改value数组，没有其它任何方法修改value数组里面的内容
+    //c、value 的权限是 private，外部的类也访问不到
     private final char value[];
 
     /**
      * Cache the hash code for the string
      */
     /*字符串对象的哈希值，默认值为0*/
+    //缓存 HashCode
+    //不需要重新计算，直接返回缓存过的 hash 的值就可以了，
+    // 因为它不会变，这样可以提高效率
     private int hash; // Default to 0
 
     /**

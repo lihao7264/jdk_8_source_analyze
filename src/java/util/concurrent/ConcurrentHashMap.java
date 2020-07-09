@@ -6373,6 +6373,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 
     // Unsafe mechanics
+    // Unsafe 类
     private static final sun.misc.Unsafe U;
     private static final long SIZECTL;
     private static final long TRANSFERINDEX;
