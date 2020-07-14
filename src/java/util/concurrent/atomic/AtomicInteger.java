@@ -55,16 +55,19 @@ public class AtomicInteger extends Number implements java.io.Serializable {
     private static final long serialVersionUID = 6214790243416807050L;
 
     // setup to use Unsafe.compareAndSwapInt for updates
+    // 获取Unsafe的实例
     private static final Unsafe unsafe = Unsafe.getUnsafe();
+    // 标识value字段的偏移量
     private static final long valueOffset;
 
+    // 静态代码块，通过unsafe获取value的偏移量(静态代码块类加载的时候执行，只会执行一次)
     static {
         try {
             valueOffset = unsafe.objectFieldOffset
                 (AtomicInteger.class.getDeclaredField("value"));
         } catch (Exception ex) { throw new Error(ex); }
     }
-
+    // 存储int类型值的地方，使用volatile修饰（保证可见性--即一个线程修改对另一个线程立即可见，主要的实现原理是内存屏障）
     private volatile int value;
 
     /**
@@ -124,12 +127,17 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * Atomically sets the value to the given updated value
      * if the current value {@code ==} the expected value.
      *
-     * @param expect the expected value
-     * @param update the new value
+     * 如果当前值{@code ==}是期望值，则以原子方式将该值设置为给定的更新值。
+     *
+     * @param expect the expected value  原来的值，即期望的值
+     * @param update the new value   要修改的值
      * @return {@code true} if successful. False return indicates that
      * the actual value was not equal to the expected value.
+     * {@code true}如果成功。 错误返回表示实际值不等于期望值。
      */
     public final boolean compareAndSet(int expect, int update) {
+        // Unsafe中的方法
+        // 参数：操作的对象、对象中字段的偏移量、原来的值，即期望的值、要修改的值
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
     }
 
@@ -155,6 +163,8 @@ public class AtomicInteger extends Number implements java.io.Serializable {
      * @return the previous value  之前的值
      */
     public final int getAndIncrement() {
+        // Unsafe中的方法
+        // 参数：操作的对象、对象中字段的偏移量、要增加的值
         return unsafe.getAndAddInt(this, valueOffset, 1);
     }
 
