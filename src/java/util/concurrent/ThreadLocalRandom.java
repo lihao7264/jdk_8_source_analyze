@@ -202,6 +202,9 @@ public class ThreadLocalRandom extends Random {
      * thread local seed value needs to be generated. Note that even
      * though the initialization is purely thread-local, we need to
      * rely on (static) atomic generators to initialize the values.
+     * 初始化当前线程的线程字段。
+     * 仅在Thread.threadLocalRandomProbe为零时调用，指示需要生成线程本地种子值。
+     * 请注意，即使初始化纯粹是线程局部的，我们也需要依靠（静态）原子生成器来初始化值。
      */
     static final void localInit() {
         int p = probeGenerator.addAndGet(PROBE_INCREMENT);
@@ -214,11 +217,13 @@ public class ThreadLocalRandom extends Random {
 
     /**
      * Returns the current thread's {@code ThreadLocalRandom}.
+     * 返回当前线程的{@code ThreadLocalRandom}。
      *
      * @return the current thread's {@code ThreadLocalRandom}
      */
     public static ThreadLocalRandom current() {
         if (UNSAFE.getInt(Thread.currentThread(), PROBE) == 0)
+            // 初始化
             localInit();
         return instance;
     }

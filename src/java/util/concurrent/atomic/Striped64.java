@@ -116,16 +116,21 @@ abstract class Striped64 extends Number {
      *
      * JVM intrinsics note: It would be possible to use a release-only
      * form of CAS here, if it were provided.
+     * Striped64中的内部类，使用@sun.misc.Contended注解，说明里面的值消除伪共享(一个64字节的缓存行只存储一个值)
      */
     @sun.misc.Contended static final class Cell {
+        // 存储元素的值，使用volatile修饰保证可见性
         volatile long value;
         Cell(long x) { value = x; }
+        // CAS更新value的值
         final boolean cas(long cmp, long val) {
             return UNSAFE.compareAndSwapLong(this, valueOffset, cmp, val);
         }
 
         // Unsafe mechanics
+        // Unsafe实例
         private static final sun.misc.Unsafe UNSAFE;
+        // value字段的偏移量
         private static final long valueOffset;
         static {
             try {
@@ -140,32 +145,42 @@ abstract class Striped64 extends Number {
     }
 
     /** Number of CPUS, to place bound on table size */
+    // CPUS的数量，要限制在表大小上
     static final int NCPU = Runtime.getRuntime().availableProcessors();
 
     /**
      * Table of cells. When non-null, size is a power of 2.
+     *  cells数组：存储各个段的值
+     *  在非空情况下一定是2的幂长度
      */
     transient volatile Cell[] cells;
 
     /**
      * Base value, used mainly when there is no contention, but also as
      * a fallback during table initialization races. Updated via CAS.
+     * 最初无竞争时使用的，也算一个特殊的段
+     * 也同时充当table在初始化期间的竞争后备，通过CAS操作进行更新.
      */
     transient volatile long base;
 
     /**
      * Spinlock (locked via CAS) used when resizing and/or creating Cells.
+     * 标记当前是否有线程在创建或扩容cells或者在创建Cell
+     * 通过CAS更新该值，相当于是一个锁
+     * 自旋锁 (通过CAS操作加锁)用于在对Cells做创建或者调整大小的时候进行加锁。
      */
     transient volatile int cellsBusy;
 
     /**
      * Package-private default constructor
+     * 默认函数使用default修饰，也就是包内有效。
      */
     Striped64() {
     }
 
     /**
      * CASes the base field.
+     * cas更新base字段
      */
     final boolean casBase(long cmp, long val) {
         return UNSAFE.compareAndSwapLong(this, BASE, cmp, val);
@@ -173,6 +188,7 @@ abstract class Striped64 extends Number {
 
     /**
      * CASes the cellsBusy field from 0 to 1 to acquire lock.
+     * cas方式，将cellBusy字段从0设为1，以标示获取锁。
      */
     final boolean casCellsBusy() {
         return UNSAFE.compareAndSwapInt(this, CELLSBUSY, 0, 1);
@@ -181,6 +197,8 @@ abstract class Striped64 extends Number {
     /**
      * Returns the probe value for the current thread.
      * Duplicated from ThreadLocalRandom because of packaging restrictions.
+     * 返回当前线程的标示。
+     * 由于包限制，这段代码是从ThreadLocalRandom拷贝过来的
      */
     static final int getProbe() {
         return UNSAFE.getInt(Thread.currentThread(), PROBE);
@@ -190,6 +208,9 @@ abstract class Striped64 extends Number {
      * Pseudo-randomly advances and records the given probe value for the
      * given thread.
      * Duplicated from ThreadLocalRandom because of packaging restrictions.
+     *
+     * 利用伪随机算法加强标识后，将为当前线程记录这个标识。
+     * 由于包限制，这段代码是从ThreadLocalRandom拷贝过来的
      */
     static final int advanceProbe(int probe) {
         probe ^= probe << 13;   // xorshift
@@ -205,87 +226,143 @@ abstract class Striped64 extends Number {
      * explanation. This method suffers the usual non-modularity
      * problems of optimistic retry code, relying on rechecked sets of
      * reads.
+     * 这个方法处理初始化、调整大小、创建新Cells和争用等情况。
+     * 这个方法由于有比较乐观的重试机制，所以存在常见的非模块化问题，依赖于重试
      *
-     * @param x the value
+     * @param x the value   元素
      * @param fn the update function, or null for add (this convention
-     * avoids the need for an extra field or function in LongAdder).
-     * @param wasUncontended false if CAS failed before call
+     * avoids the need for an extra field or function in LongAdder).   更新函数，如果是add可以为null，这个约定避免了longadder中定义额外的变量或者函数
+     * @param wasUncontended false if CAS failed before call  如果CAS在调用之前失败了，这个值为false
      */
     final void longAccumulate(long x, LongBinaryOperator fn,
                               boolean wasUncontended) {
         int h;
+        // 获取当前线程的probe值，如果为0，则需要初始化该线程的probe值
         if ((h = getProbe()) == 0) {
+            // 强制初始化
             ThreadLocalRandom.current(); // force initialization
+            // 重新获取probe值
             h = getProbe();
+            // 都未初始化，肯定还不存在竞争激烈
             wasUncontended = true;
         }
+        // 是否发生碰撞
         boolean collide = false;                // True if last slot nonempty
         for (;;) {
             Cell[] as; Cell a; int n; long v;
+            // cells已经初始化过
             if ((as = cells) != null && (n = as.length) > 0) {
+                // 当前线程所在的Cell未初始化
                 if ((a = as[(n - 1) & h]) == null) {
+                    // 当前无其它线程在创建或扩容cells，也没有线程在创建Cell
                     if (cellsBusy == 0) {       // Try to attach new Cell
+                        // 新建一个Cell，值为当前需要增加的值
                         Cell r = new Cell(x);   // Optimistically create
+                        // 再次检测cellsBusy，并尝试更新它为1
+                        // 相当于当前线程加锁
                         if (cellsBusy == 0 && casCellsBusy()) {
+                            // 是否创建成功
                             boolean created = false;
                             try {               // Recheck under lock
                                 Cell[] rs; int m, j;
+                                // 重新获取cells，并找到当前线程hash到cells数组中的位置
+                                // 这里一定要重新获取cells，因为as并不在锁定范围内
+                                // 有可能已经扩容了，这里要重新获取
                                 if ((rs = cells) != null &&
                                     (m = rs.length) > 0 &&
                                     rs[j = (m - 1) & h] == null) {
+                                    // 把上面新建的Cell放在cells的j位置处
                                     rs[j] = r;
+                                    // 创建成功
                                     created = true;
                                 }
                             } finally {
+                                // 相当于释放锁
                                 cellsBusy = 0;
                             }
+                            // 创建成功了就返回
+                            // 值已经放在新建的Cell里面了
                             if (created)
                                 break;
                             continue;           // Slot is now non-empty
                         }
                     }
+                    // 标记当前未出现冲突
                     collide = false;
                 }
+                // 当前线程所在的Cell不为空，且更新失败了
+                // 这里简单地设为true，相当于简单地自旋一次
+                // 通过下面的语句修改线程的probe再重新尝试
                 else if (!wasUncontended)       // CAS already known to fail
                     wasUncontended = true;      // Continue after rehash
+                // 再次尝试CAS更新当前线程所在Cell的值，如果成功了就返回
                 else if (a.cas(v = a.value, ((fn == null) ? v + x :
                                              fn.applyAsLong(v, x))))
                     break;
+                // 如果cells数组的长度达到了CPU核心数或者cells扩容了
+                // 设置collide为false并通过下面的语句修改线程的probe再重新尝试
+
+                // cells != as表明cells数组已经被更新了
+                //标记为最大状态或者说是过期状态
                 else if (n >= NCPU || cells != as)
                     collide = false;            // At max size or stale
+                // 上个else if都更新失败了，且上个条件不成立，说明出现冲突了
                 else if (!collide)
                     collide = true;
+                // 明确出现冲突了，尝试占有锁，并扩容
                 else if (cellsBusy == 0 && casCellsBusy()) {
                     try {
+                        // 检查是否有其它线程已经扩容过了
                         if (cells == as) {      // Expand table unless stale
+                            // 新数组为原数组的两倍
                             Cell[] rs = new Cell[n << 1];
+                            // 把旧数组元素拷贝到新数组中
                             for (int i = 0; i < n; ++i)
                                 rs[i] = as[i];
+                            // 重新赋值cells为新数组
                             cells = rs;
                         }
                     } finally {
+                        //释放锁
                         cellsBusy = 0;
                     }
+                    // 已解决冲突
                     collide = false;
+                    // 使用扩容后的新数组重新尝试
                     continue;                   // Retry with expanded table
                 }
+                // 更新失败或者达到了CPU核心数，重新生成probe，并重试
                 h = advanceProbe(h);
             }
+            // 未初始化过cells数组，尝试占有锁并初始化cells数组
             else if (cellsBusy == 0 && cells == as && casCellsBusy()) {
+                // 是否初始化成功
                 boolean init = false;
                 try {                           // Initialize table
+                    // 检测是否有其它线程初始化过
                     if (cells == as) {
+                         // 新建一个大小为2的Cell数组
                         Cell[] rs = new Cell[2];
+                        // 找到当前线程hash到数组中的位置并创建其对应的Cell
                         rs[h & 1] = new Cell(x);
+                        // 赋值给cells数组
                         cells = rs;
+                        // 初始化成功
                         init = true;
                     }
                 } finally {
+                    //释放锁
                     cellsBusy = 0;
                 }
+
+                // 初始化成功直接返回
+                // 因为增加的值已经同时创建到Cell中了
                 if (init)
                     break;
             }
+            //此处表明Cells为空，并且初始化的时候获取锁失败，直接在base上进行CAS
+            // 如果有其它线程在初始化cells数组中，就尝试更新base
+            // 如果成功了就返回
             else if (casBase(v = base, ((fn == null) ? v + x :
                                         fn.applyAsLong(v, x))))
                 break;                          // Fall back on using base

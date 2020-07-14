@@ -41,7 +41,7 @@ import sun.misc.Unsafe;
 /**
  * An {@code int} value that may be updated atomically.  See the
  * {@link java.util.concurrent.atomic} package specification for
- * description of the properties of atomic variables. An
+ * description of the properties of aLotomic variables. An
  * {@code AtomicInteger} is used in applications such as atomically
  * incremented counters, and cannot be used as a replacement for an
  * {@link java.lang.Integer}. However, this class does extend
