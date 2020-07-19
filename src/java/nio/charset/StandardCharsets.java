@@ -28,7 +28,8 @@ package java.nio.charset;
  * Constant definitions for the standard {@link Charset Charsets}. These
  * charsets are guaranteed to be available on every implementation of the Java
  * platform.
- *
+ * 标准{@link Charset Charsets}的常量定义。
+ * 保证这些字符集可在Java平台的每种实现中使用。
  * @see <a href="Charset#standard">Standard Charsets</a>
  * @since 1.7
  */
@@ -40,14 +41,17 @@ public final class StandardCharsets {
     /**
      * Seven-bit ASCII, a.k.a. ISO646-US, a.k.a. the Basic Latin block of the
      * Unicode character set
+     * ASCII码
      */
     public static final Charset US_ASCII = Charset.forName("US-ASCII");
     /**
      * ISO Latin Alphabet No. 1, a.k.a. ISO-LATIN-1
+     * ISO-8859-1/ISO-LATIN-1
      */
     public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
     /**
      * Eight-bit UCS Transformation Format
+     * UTF-8
      */
     public static final Charset UTF_8 = Charset.forName("UTF-8");
     /**

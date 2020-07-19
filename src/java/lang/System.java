@@ -521,6 +521,7 @@ public final class System {
 
     /**
      * System properties. The following properties are guaranteed to be defined:
+     * 系统属性。 保证定义以下属性：
      * <dl>
      * <dt>java.version         <dd>Java version number
      * <dt>java.vendor          <dd>Java vendor specific string
@@ -707,10 +708,15 @@ public final class System {
      * properties is first created and initialized in the same manner as
      * for the <code>getProperties</code> method.
      *
-     * @param      key   the name of the system property.
+     * 获取由指定key表示的系统属性。
+     * 首先，如果有安全管理器，则将其密钥作为参数调用其checkPropertyAccess方法。
+     * 这可能会导致SecurityException。
+     * 如果没有当前的系统属性集，则首先以与getProperties方法相同的方式创建和初始化一组系统属性。
+     *
+     * @param      key   the name of the system property.  系统属性的名称。
      * @return     the string value of the system property,
      *             or <code>null</code> if there is no property with that key.
-     *
+     *             系统属性的字符串值，如果没有带该属性的属性，则为null。
      * @exception  SecurityException  if a security manager exists and its
      *             <code>checkPropertyAccess</code> method doesn't allow
      *              access to the specified system property.
@@ -728,7 +734,7 @@ public final class System {
         if (sm != null) {
             sm.checkPropertyAccess(key);
         }
-
+        // 从Properties中取值
         return props.getProperty(key);
     }
 
@@ -764,7 +770,7 @@ public final class System {
         if (sm != null) {
             sm.checkPropertyAccess(key);
         }
-
+        // 从Properties中取值，如果取不到，返回默认值
         return props.getProperty(key, def);
     }
 
@@ -805,6 +811,7 @@ public final class System {
                 SecurityConstants.PROPERTY_WRITE_ACTION));
         }
 
+        // 设置属性(key:value)
         return (String) props.setProperty(key, value);
     }
 
