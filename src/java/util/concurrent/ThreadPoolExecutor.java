@@ -391,6 +391,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
     // Packing and unpacking ctl
     private static int runStateOf(int c)     { return c & ~CAPACITY; }
+    // 当前线程数
     private static int workerCountOf(int c)  { return c & CAPACITY; }
     private static int ctlOf(int rs, int wc) { return rs | wc; }
 
@@ -591,6 +592,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * the thread actually starts running tasks, we initialize lock
      * state to a negative value, and clear it upon start (in
      * runWorker).
+     * Worker 可以理解为是对 Thread 的包装，Worker 内部有一个 Thread 对象，
+     * 它正是最终真正执行任务的线程，所以一个 Worker 就对应线程池中的一个线程，addWorker 就代表增加线程。
+     *
+     * 线程复用的逻辑实现主要在 Worker 类中的 run 方法里执行的 runWorker 方法中，
+     * 简化后的 runWorker 方法代码如下所示。
+     *
      */
     private final class Worker
         extends AbstractQueuedSynchronizer
@@ -603,8 +610,10 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         private static final long serialVersionUID = 6138294804551838833L;
 
         /** Thread this worker is running in.  Null if factory fails. */
+        // 此工作线程正是其中运行的线程。如果工厂失败，则为null。
         final Thread thread;
         /** Initial task to run.  Possibly null. */
+        // 要运行的初始任务。 可能为null。
         Runnable firstTask;
         /** Per-thread task counter */
         volatile long completedTasks;
@@ -614,12 +623,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * @param firstTask the first task (null if none)
          */
         Worker(Runnable firstTask) {
+            // 禁止中断，直到runWorker
             setState(-1); // inhibit interrupts until runWorker
             this.firstTask = firstTask;
+            // 根据线程工厂创建线程
             this.thread = getThreadFactory().newThread(this);
         }
 
         /** Delegates main run loop to outer runWorker  */
+        // 将主运行循环委托给外部runWorker
         public void run() {
             runWorker(this);
         }
@@ -897,6 +909,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * value to ensure reads of fresh values after checking other pool
      * state).
      * @return true if successful
+     * 如果返回 true 代表添加成功，如果返回 false 代表添加失败。
+     * addWorker 方法会添加并启动一个 Worker
      */
     private boolean addWorker(Runnable firstTask, boolean core) {
         retry:
@@ -1121,16 +1135,23 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * and the thread's UncaughtExceptionHandler have as accurate
      * information as we can provide about any problems encountered by
      * user code.
+     * 通过取 Worker 的 firstTask 或者 getTask方法从 workQueue 中取出了新任务，
+     * 并直接调用 Runnable 的 run 方法来执行任务，也就是如之前所说的，每个线程都始终在一个大循环中，
+     * 反复获取任务，然后执行任务，从而实现了线程的复用。
      *
      * @param w the worker
      */
     final void runWorker(Worker w) {
+        // 获取当前线程
         Thread wt = Thread.currentThread();
+        // 获取第一个任务
         Runnable task = w.firstTask;
         w.firstTask = null;
         w.unlock(); // allow interrupts
         boolean completedAbruptly = true;
         try {
+            // 实现线程复用的逻辑主要在一个不停循环的 while 循环体中。
+            // 通过取 Worker 的 firstTask 或者通过 getTask 方法从 workQueue 中获取待执行的任务。
             while (task != null || (task = getTask()) != null) {
                 w.lock();
                 // If pool is stopping, ensure thread is interrupted;
@@ -1146,6 +1167,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     beforeExecute(wt, task);
                     Throwable thrown = null;
                     try {
+                        // 直接调用 task 的 run 方法来执行具体的任务（而不是新建线程）。
                         task.run();
                     } catch (RuntimeException x) {
                         thrown = x; throw x;
@@ -1340,6 +1362,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws NullPointerException if {@code command} is null
      */
     public void execute(Runnable command) {
+        //如果传入的Runnable的空，就抛出异常
         if (command == null)
             throw new NullPointerException();
         /*
@@ -1363,18 +1386,40 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * and so reject the task.
          */
         int c = ctl.get();
+        // 判断当前线程数是否小于核心线程数，如果小于核心线程数就调用 addWorker() 方法增加一个 Worker
         if (workerCountOf(c) < corePoolSize) {
+            // 创建一个Worker作为核心线程使用
+            // addWorker 方法的主要作用是在线程池中创建一个线程并执行第一个参数传入的任务，
+            // 它的第二个参数是个布尔值，如果布尔值传入 true 代表增加线程时判断当前线程是否少于 corePoolSize，
+            // 小于则增加新线程，大于等于则不增加；
+            // 总结：所以这里的布尔值的含义是以核心线程数为界限还是以最大线程数为界限进行是否新增线程的判断。
             if (addWorker(command, true))
                 return;
             c = ctl.get();
         }
+        // 走到这里，说明当前线程数大于或等于核心线程数或者 addWorker 失败了
+        // 通过 if (isRunning(c) && workQueue.offer(command)) 检查线程池状态是否为 Running
+        // ，如果线程池状态是 Running 就把任务放入任务队列中，也就是 workQueue.offer(command)。
         if (isRunning(c) && workQueue.offer(command)) {
             int recheck = ctl.get();
+            // 如果线程池已经不处于 Running 状态，说明线程池被关闭，
+            // 那么就移除刚刚添加到任务队列中的任务，并执行拒绝策略
             if (! isRunning(recheck) && remove(command))
+                // 执行拒绝策略
                 reject(command);
             else if (workerCountOf(recheck) == 0)
+                // 进入这个 else 说明前面判断到线程池状态为 Running
+                // 那么当任务被添加进来之后就需要防止没有可执行线程的情况发生（比如之前的线程被回收了或意外终止了），
+                // 所以此时如果检查当前线程数为 0，也就是 workerCountOf**(recheck) == 0，那就执行 addWorker() 方法新建线程。
+                // 如果传入 false 代表增加线程时判断当前线程是否少于 maxPoolSize，小于则增加新线程，大于等于则不增加，
                 addWorker(null, false);
         }
+        // 走到这里说明线程池不是 Running 状态或线程数大于或等于核心线程数并且任务队列已经满了
+        // 此时需要添加新线程，直到线程数达到“最大线程数”，所以此时就会再次调用 addWorker 方法并将第二个参数传入 false，
+        // 传入 false 代表增加线程时判断当前线程数是否少于 maxPoolSize，小于则增加新线程，大于等于则不增加，
+        // 也就是以 maxPoolSize 为上限创建新的 worker；addWorker 方法如果返回 true 代表添加成功，如果返回 false 代表任务添加失败，
+        // 说明当前线程数已经达到 maxPoolSize，然后执行拒绝策略 reject 方法。
+        // 如果执行到这里线程池的状态不是 Running，那么 addWorker 会失败并返回 false，所以也会执行拒绝策略 reject 方法。
         else if (!addWorker(command, false))
             reject(command);
     }

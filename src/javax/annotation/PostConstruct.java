@@ -34,7 +34,13 @@ import static java.lang.annotation.RetentionPolicy.*;
  * after dependency injection is done to perform any initialization. This
  * method MUST be invoked before the class is put into service. This
  * annotation MUST be supported on all classes that support dependency
- * injection. The method annotated with PostConstruct MUST be invoked even
+ * injection.
+ *
+ * PostConstruct注解，用于标注在需要依赖注入完成，以执行任何初始化之后需要执行的方法上。
+ * 在Bean投入使用之前必须调用此方法。所有支持依赖注入的类都必须支持该注解。
+ *
+ *
+ * The method annotated with PostConstruct MUST be invoked even
  * if the class does not request any resources to be injected. Only one
  * method can be annotated with this annotation. The method on which the
  * PostConstruct annotation is applied MUST fulfill all of the following
