@@ -635,6 +635,7 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Creates and enqueues node for current thread and given mode.
+     * 为当前线程和给定模式创建并排队节点。
      *
      * @param mode Node.EXCLUSIVE for exclusive, Node.SHARED for shared
      * @return the new node
@@ -859,6 +860,7 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Convenience method to interrupt current thread.
+     * 一种方法来中断当前线程。
      */
     static void selfInterrupt() {
         Thread.currentThread().interrupt();
@@ -886,6 +888,9 @@ public abstract class AbstractQueuedSynchronizer
     /**
      * Acquires in exclusive uninterruptible mode for thread already in
      * queue. Used by condition wait methods as well as acquire.
+     *
+     * 以排他的不间断模式获取已在队列中的线程。
+     * 用于条件等待方法以及获取。
      *
      * @param node the node
      * @param arg the acquire argument
@@ -1261,8 +1266,11 @@ public abstract class AbstractQueuedSynchronizer
      *        can represent anything you like.
      */
     public final void acquire(int arg) {
+        // 尝试加锁
         if (!tryAcquire(arg) &&
+                //添加到等待队列中
             acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
+            // 中断自己
             selfInterrupt();
     }
 
