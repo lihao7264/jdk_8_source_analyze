@@ -109,6 +109,9 @@ package java.util.concurrent.locks;
  * You should consider all of these things when evaluating the suitability
  * of a given implementation for your application.
  *
+ * {@code ReadWriteLock}维护一对关联的{@link Lock锁}，一个用于只读操作，一个用于写入。
+ * {@link #readLock读锁}可以由多个读线程同时持有，只要没有写锁。
+ * {@link #writeLock写锁}是互斥的。
  * @see ReentrantReadWriteLock
  * @see Lock
  * @see ReentrantLock
@@ -119,6 +122,7 @@ package java.util.concurrent.locks;
 public interface ReadWriteLock {
     /**
      * Returns the lock used for reading.
+     * 返回用于读取的锁。
      *
      * @return the lock used for reading
      */
@@ -126,6 +130,7 @@ public interface ReadWriteLock {
 
     /**
      * Returns the lock used for writing.
+     * 返回用于写入的锁。
      *
      * @return the lock used for writing
      */

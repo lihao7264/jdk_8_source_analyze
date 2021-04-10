@@ -349,6 +349,8 @@ public class ReentrantReadWriteLock
          * Returns true if the current thread, when trying to acquire
          * the read lock, and otherwise eligible to do so, should block
          * because of policy for overtaking other waiting threads.
+         * 如果当前线程在尝试获取读锁时（否则有资格这样做）
+         * 由于策略超过其它等待线程而应阻塞，则返回true。
          */
         abstract boolean readerShouldBlock();
 
@@ -356,6 +358,8 @@ public class ReentrantReadWriteLock
          * Returns true if the current thread, when trying to acquire
          * the write lock, and otherwise eligible to do so, should block
          * because of policy for overtaking other waiting threads.
+         * 如果当前线程在尝试获取写锁时（否则有资格这样做）
+         * 由于策略超过其它等待线程而应阻塞，则返回true。
          */
         abstract boolean writerShouldBlock();
 
@@ -668,9 +672,15 @@ public class ReentrantReadWriteLock
      */
     static final class NonfairSync extends Sync {
         private static final long serialVersionUID = -8159625535654395037L;
+        // 始终返回 false，可以看出，对于想获取写锁的线程而言，由于返回值是 false，
+        // 所以它是随时可以插队的，这就和我们的 ReentrantLock 的设计思想是一样的
+        // 这就和我们的 ReentrantLock 的设计思想是一样的
         final boolean writerShouldBlock() {
+            // //作家可以随时驳船
             return false; // writers can always barge
         }
+
+        // 但是读锁却不一样。
         final boolean readerShouldBlock() {
             /* As a heuristic to avoid indefinite writer starvation,
              * block if the thread that momentarily appears to be head
@@ -679,25 +689,55 @@ public class ReentrantReadWriteLock
              * block if there is a waiting writer behind other enabled
              * readers that have not yet drained from the queue.
              */
+            // 假设线程 2 和线程 4 正在同时读取，线程 3 想要写入，
+            // 但是由于线程 2 和线程 4 已经持有读锁了，所以线程 3 就进入等待队列进行等待。
+            // 此时，线程 5 突然跑过来想要插队获取读锁：
+            // 第一种策略：允许插队
+            //  1、由于现在有线程在读，而线程 5 又不会特别增加它们读的负担，因为线程们可以共用这把锁，
+            //    所以第一种策略就是让线程 5 直接加入到线程 2 和线程 4 一起去读取。
+            //  2、这种策略看上去增加了效率，但是有一个严重的问题，那就是如果想要读取的线程不停地增加，
+            //     比如线程 6，那么线程 6也可以插队，这就会导致读锁长时间内不会被释放，
+            //     导致线程 3 长时间内拿不到写锁，也就是那个需要拿到写锁的线程会陷入"饥饿"状态，它将在长时间内得不到执行。
+            //
+            // 第二种策略：不允许插队
+            //  1、这种策略认为由于线程3已经提前等待了，所以虽然线程5如果直接插队成功，
+            //     可以提高效率，但是我们依然让线程5去排队等待。
+            //  2、按照这种策略线程 5 会被放入等待队列中，并且排在线程 3 的后面，
+            //     让线程 3 优先于线程 5 执行，这样可以避免"饥饿"状态，这对于程序的健壮性是很有好处的，
+            //     直到线程 3 运行完毕，线程 5 才有机会运行，这样谁都不会等待太久的时间。
+            //  3、所以我们可以看出，即便是非公平锁，只要等待队列的头结点是尝试获取写锁的线程，
+            //     那么读锁依然是不能插队的，目的是避免"饥饿"。
+            //
+            //  注意：a、ReentrantReadWriteLock 实现的不允许插队的策略
+            //
+            //
             return apparentlyFirstQueuedIsExclusive();
         }
     }
 
     /**
      * Fair version of Sync
+     * 同步的公平版本
      */
     static final class FairSync extends Sync {
         private static final long serialVersionUID = -2274990926593161451L;
+
         final boolean writerShouldBlock() {
+            // 只要等待队列中有线程在等待，也就是 hasQueuedPredecessors() 返回 true 的时候，
+            // 那么 writer 和 reader 都会 block，也就是一律不允许插队，都乖乖去排队
             return hasQueuedPredecessors();
         }
+
         final boolean readerShouldBlock() {
+            // 只要等待队列中有线程在等待，也就是 hasQueuedPredecessors() 返回 true 的时候，
+            // 那么 writer 和 reader 都会 block，也就是一律不允许插队，都乖乖去排队
             return hasQueuedPredecessors();
         }
     }
 
     /**
      * The lock returned by method {@link ReentrantReadWriteLock#readLock}.
+     * 方法{@link ReentrantReadWriteLock＃readLock}返回的锁。
      */
     public static class ReadLock implements Lock, java.io.Serializable {
         private static final long serialVersionUID = -5992448646407690164L;

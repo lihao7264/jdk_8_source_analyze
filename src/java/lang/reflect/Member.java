@@ -29,6 +29,10 @@ package java.lang.reflect;
  * Member is an interface that reflects identifying information about
  * a single member (a field or a method) or a constructor.
  *
+ * 反映有关单个成员（字段或方法）或构造函数的标识信息的接口。
+ *
+ * 总结：Memeber表示类中的一个成员。
+ *
  * @see java.lang.Class
  * @see Field
  * @see Method
